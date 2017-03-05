@@ -18,10 +18,10 @@ data1 = 0.25*indep1 + 0.75*np.vstack((latvar1, latvar2, latvar1, latvar2)).T
 data2 = 0.25*indep2 + 0.75*np.vstack((latvar1, latvar2, latvar1, latvar2, latvar1)).T
 
 # Split each dataset into two halves: training set and test set
-train1 = data1[:nSamples/2]
-train2 = data2[:nSamples/2]
-test1 = data1[nSamples/2:]
-test2 = data2[nSamples/2:]
+train1 = data1[:int(nSamples/2)]
+train2 = data2[:int(nSamples/2)]
+test1 = data1[int(nSamples/2):]
+test2 = data2[int(nSamples/2):]
 
 # Create a cca object as an instantiation of the CCA object class. 
 cca = rcca.CCA(kernelcca = False, reg = 0., numCC = 2)
