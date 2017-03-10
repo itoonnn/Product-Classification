@@ -4,6 +4,8 @@ from sklearn.model_selection import StratifiedShuffleSplit,StratifiedKFold
 from sklearn.preprocessing import LabelEncoder,FunctionTransformer,Normalizer,label_binarize,MultiLabelBinarizer
 from sklearn.metrics import classification_report, f1_score, accuracy_score, confusion_matrix, precision_score ,recall_score, roc_curve, auc, roc_auc_score,make_scorer,precision_recall_fscore_support
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.feature_extraction.text import TfidfVectorizer
+from extractText import *
 from extractImage import *
 
 def roc_auc_fixed(y,y_pred):
@@ -57,54 +59,56 @@ df_count = df_count.dropna()
 df = df.loc[~df['category_path'].isin(list(df_count.index))]
 df = df.reset_index(drop=True)
 print("Uniqued df by name : "+str(len(df['name'])))
+x_text = textprocessingOriginal(df['name'])
+vectorizer = TfidfVectorizer(ngram_range=(1,2),stop_words={'english'},min_df=0.001,max_df=1.0)
+x_text = vectorizer.fit_transform(x_text)
+x_text = np.array(x_text.toarray())
 ####### label encoder
 number = LabelEncoder()
 y = df['category_path']
 y = y.astype(str) 
 y = number.fit_transform(y)
-print(np.shape(np.unique(y)))
-##### image processing
-x = []
-miss_shape = 0
-for img in df['img_file']:
-  try:
-    # feature = np.array(extractImage_contextual(img_root+"/"+img))
-    # feature = np.array(extractImage_sift(img_root+"/"+img))
-    feature = np.array(extractImage_surf(img_root+"/"+img))
-    miss_shape = np.shape(feature)
-  except:
-    feature = np.zeros(miss_shape)
-  x.append(feature)
-x = np.array(x)
 
+##### image processing
+x_img = []
+x = []
+miss_shape = 0 
+for i,row in df.iterrows():
+  img = row['img_file']
+  try:
+    img_feature = np.array(extractImage_contextual(img_root+"/"+img))
+    miss_shape = np.shape(img_feature)
+  except:
+    img_feature = np.zeros(miss_shape)
+  x_img.append(feature)
 #### normalize img
 norm = Normalizer()
-x = norm.fit_transform(x)
-
-# y = y[:20]
-####
+x_img = norm.fit_transform(x_img)
+#### merge
+for i in range(len(x_text)):
+  feature = np.append(x_text[i],x_img[i])
+  x.append(feature)
 ### Preprocessing end ###
 
-# output = pd.DataFrame(pd.Series(x))
-np.savetxt("image_feature.csv",x,delimiter=',')
-np.savetxt("image_label.csv",y)
 
 
-#### split train test
+
+x = pd.Series(x,dtype='float')
+# #### split train test
 SSK = StratifiedKFold(n_splits=10,random_state=SEED)
 INDEX = []
 for train_index, test_index in SSK.split(x,y):
   INDEX.append({'train':train_index,'test':test_index})
+
 train = x[INDEX[GROUP]['train']]
 test = x[INDEX[GROUP]['test']]
 label_train = y[INDEX[GROUP]['train']]
 label_test = y[INDEX[GROUP]['test']]
-
-# unique, counts = np.unique(label_train, return_counts=True)
-# print(np.asarray((unique,counts)).T)
-
 ##### classification
-print(train)
+train = train.as_matrix()
+train = [np.array(item) for item in train]
+print(train[:5])
+print(np.shape(train))
 clf = MultinomialNB(alpha=0.001).fit(train, label_train)
 pred = clf.predict(train)
 probas_ = clf.predict_proba(train)
