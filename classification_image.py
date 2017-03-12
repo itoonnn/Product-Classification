@@ -34,6 +34,8 @@ elif input_file == 2:
 elif input_file == 3:
   input_file = "redmart_path.csv"
 img_root = input_file.replace("_path.csv","")+"_img"
+print("Opertion contextural,sift,surf,orb")
+opt = input()
 print("SEED")
 SEED = 2000
 GROUP = int(input())
@@ -64,19 +66,9 @@ y = y.astype(str)
 y = number.fit_transform(y)
 print(np.shape(np.unique(y)))
 ##### image processing
-x = []
-miss_shape = 0
-for img in df['img_file']:
-  try:
-    # feature = np.array(extractImage_contextual(img_root+"/"+img))
-    # feature = np.array(extractImage_sift(img_root+"/"+img))
-    feature = np.array(extractImage_surf(img_root+"/"+img))
-    miss_shape = np.shape(feature)
-  except:
-    feature = np.zeros(miss_shape)
-  x.append(feature)
-x = np.array(x)
 
+x = extractImageFeature(df['img_file'],img_root,opt=opt)
+print(x)
 #### normalize img
 norm = Normalizer()
 x = norm.fit_transform(x)
