@@ -4,6 +4,7 @@ from sklearn.model_selection import StratifiedShuffleSplit,StratifiedKFold
 from sklearn.preprocessing import LabelEncoder,FunctionTransformer,Normalizer,label_binarize,MultiLabelBinarizer
 from sklearn.metrics import classification_report, f1_score, accuracy_score, confusion_matrix, precision_score ,recall_score, roc_curve, auc, roc_auc_score,make_scorer,precision_recall_fscore_support
 from sklearn.naive_bayes import MultinomialNB
+from sklearn import svm
 from extractImage import *
 
 def roc_auc_fixed(y,y_pred):

@@ -7,7 +7,7 @@ from skimage.feature import canny
 from sklearn.cluster import KMeans
 from scipy import ndimage as ndi
 from scipy.spatial import distance
-import os,sys,cv2
+import os,sys,cv2,math
 
 def extractImage_contextual(PATH):
   img = io.imread(PATH)
@@ -70,7 +70,7 @@ def extractImage_orb(PATH):
   kp, des = orb.detectAndCompute(gray,None)
   return des
 
-def extractImageFeature(data,img_root,opt='contextual',n_clusters=200):
+def extractImageFeature(data,img_root,opt='contextual'):
 
   x = []
   miss_shape = 0
@@ -111,6 +111,8 @@ def extractImageFeature(data,img_root,opt='contextual',n_clusters=200):
         x[i] = np.zeros(miss_shape)
     x_cluster = np.vstack(x)
     print("START Clustering")
+    n_clusters = math.sqrt(len(x_cluster))
+    print("Number of cluster : ",n_clusters)
     x_cluster = KMeans(n_clusters=n_clusters).fit(x_cluster)
     centroids = x_cluster.cluster_centers_
     labels = x_cluster.labels_
@@ -118,9 +120,13 @@ def extractImageFeature(data,img_root,opt='contextual',n_clusters=200):
     c = 0
     x_keypoint = x
     x = []
+    nmin = 999999
+    nmax = 0
     print(len(x_keypoint))
     for i in range(len(x_keypoint)):
       feature = np.zeros(n_clusters)
+      nmax = len(x_keypoint[i]) if len(x_keypoint[i])> nmax else nmax
+      nmin = len(x_keypoint[i]) if len(x_keypoint[i])< nmin else nmin
       for j in range(len(x_keypoint[i])):
         cluster = labels[c]
         sim = distance.euclidean(x_keypoint[i][j], centroids[cluster]) #find similarity betwee keypoint and centroid of cluster of this keypoint
@@ -128,7 +134,8 @@ def extractImageFeature(data,img_root,opt='contextual',n_clusters=200):
         c+=1
       x.append(feature)
     x = np.array(x)
-
+    print("min ",nmin)
+    print("max ",nmax)
   return x
 
 # # # feature = extractImage_contextual("coldstorage_img/00a3918b5a5df518dc9379d94a7407b4.jpg")
@@ -176,6 +183,6 @@ def extractImageFeature(data,img_root,opt='contextual',n_clusters=200):
 # print("Uniqued df by name : "+str(len(df['name'])))
 
 
-# x = extractImageFeature(df['img_file'][:],img_root,opt='orb')
-# print(x)
+# x = extractImageFeature(df['img_file'][:],img_root,opt='sift')
+# # print(x)
 
