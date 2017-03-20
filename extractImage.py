@@ -71,7 +71,7 @@ def extractImage_orb(PATH):
   kp, des = orb.detectAndCompute(gray,None)
   return des
 
-def extractImageFeature(data,img_root,opt='contextual'):
+def extractImageFeature(data,img_root,opt='contextual',random_state = 2000):
 
   x = []
   miss_shape = 0
@@ -112,9 +112,10 @@ def extractImageFeature(data,img_root,opt='contextual'):
         x[i] = norm.fit_transform(x[i])
     x_cluster = np.vstack(x)
     print("START Clustering")
-    n_clusters = math.floor(math.sqrt(len(x_cluster)))
+    n_clusters = 1000
+    # n_clusters = math.floor(math.sqrt(len(x_cluster)))
     print("Number of cluster : ",n_clusters)
-    x_cluster = KMeans(n_clusters=n_clusters).fit(x_cluster)
+    x_cluster = KMeans(n_clusters=n_clusters,random_state = random_state).fit(x_cluster)
     centroids = x_cluster.cluster_centers_
     labels = x_cluster.labels_
     print("EXTRACT HISTOGRAM")

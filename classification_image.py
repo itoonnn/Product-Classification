@@ -68,7 +68,7 @@ y = number.fit_transform(y)
 print(np.shape(np.unique(y)))
 ##### image processing
 
-x = extractImageFeature(df['img_file'],img_root,opt=opt)
+x = extractImageFeature(df['img_file'],img_root,opt=opt,random_state=SEED)
 print(x)
 # #### normalize img
 # norm = Normalizer()
@@ -79,8 +79,8 @@ print(x)
 ### Preprocessing end ###
 
 # output = pd.DataFrame(pd.Series(x))
-np.savetxt("image_feature.csv",x,delimiter=',')
-np.savetxt("image_label.csv",y)
+np.savetxt("image_feature_sift_1000.csv",x,delimiter=',')
+np.savetxt("image_label_sift_1000.csv",y)
 
 
 #### split train test
@@ -98,7 +98,7 @@ label_test = y[INDEX[GROUP]['test']]
 
 ##### classification
 print(train)
-clf = SVC(C=1,probability=True).fit(train, label_train)
+clf = SVC(C=1,probability=True,random_state=SEED).fit(train, label_train)
 pred = clf.predict(train)
 probas_ = clf.predict_proba(train)
 acc,precision,recall,fbeta,auc_score = getResult(pred,label_train,probas_)
