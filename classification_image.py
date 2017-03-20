@@ -4,7 +4,7 @@ from sklearn.model_selection import StratifiedShuffleSplit,StratifiedKFold
 from sklearn.preprocessing import LabelEncoder,FunctionTransformer,Normalizer,label_binarize,MultiLabelBinarizer
 from sklearn.metrics import classification_report, f1_score, accuracy_score, confusion_matrix, precision_score ,recall_score, roc_curve, auc, roc_auc_score,make_scorer,precision_recall_fscore_support
 from sklearn.naive_bayes import MultinomialNB
-from sklearn import svm
+from sklearn.svm import SVC
 from extractImage import *
 
 def roc_auc_fixed(y,y_pred):
@@ -70,9 +70,9 @@ print(np.shape(np.unique(y)))
 
 x = extractImageFeature(df['img_file'],img_root,opt=opt)
 print(x)
-#### normalize img
-norm = Normalizer()
-x = norm.fit_transform(x)
+# #### normalize img
+# norm = Normalizer()
+# x = norm.fit_transform(x)
 
 # y = y[:20]
 ####
@@ -98,7 +98,7 @@ label_test = y[INDEX[GROUP]['test']]
 
 ##### classification
 print(train)
-clf = MultinomialNB(alpha=0.001).fit(train, label_train)
+clf = SVC(C=1,probability=True).fit(train, label_train)
 pred = clf.predict(train)
 probas_ = clf.predict_proba(train)
 acc,precision,recall,fbeta,auc_score = getResult(pred,label_train,probas_)
