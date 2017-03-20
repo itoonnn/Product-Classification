@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import Normalizer
 from skimage import io, filters, exposure, img_as_float, morphology
 from skimage.color import rgb2gray
 from skimage.feature import canny
@@ -105,10 +106,10 @@ def extractImageFeature(data,img_root,opt='contextual'):
   if(opt in ['sift','surf','orb']):
     for i in range(len(x)):
       if(np.shape(x[i])==()):
-        # print(miss_shape)
-        # print(np.shape(x[i]))
-        # print(x[i])
         x[i] = np.zeros(miss_shape)
+      else:
+        norm = Normalizer()
+        x[i] = norm.fit_transform(x[i])
     x_cluster = np.vstack(x)
     print("START Clustering")
     n_clusters = math.floor(math.sqrt(len(x_cluster)))
