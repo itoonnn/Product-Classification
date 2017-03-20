@@ -111,7 +111,7 @@ def extractImageFeature(data,img_root,opt='contextual'):
         x[i] = np.zeros(miss_shape)
     x_cluster = np.vstack(x)
     print("START Clustering")
-    n_clusters = math.sqrt(len(x_cluster))
+    n_clusters = math.floor(math.sqrt(len(x_cluster)))
     print("Number of cluster : ",n_clusters)
     x_cluster = KMeans(n_clusters=n_clusters).fit(x_cluster)
     centroids = x_cluster.cluster_centers_
