@@ -68,7 +68,7 @@ y = number.fit_transform(y)
 print(np.shape(np.unique(y)))
 ##### image processing
 
-x = extractImageFeature(df['img_file'],img_root,opt=opt,random_state=SEED)
+train,test,label_train,label_test = extractImageFeature(df['img_file'],y,img_root,opt=opt,random_state=SEED)
 print(x)
 # #### normalize img
 # norm = Normalizer()
@@ -79,19 +79,19 @@ print(x)
 ### Preprocessing end ###
 
 # output = pd.DataFrame(pd.Series(x))
-np.savetxt("image_feature_surf_"+str(GROUP)+".csv",x,delimiter=',')
+# np.savetxt("image_feature_"+opt+"_"+str(GROUP)+".csv",x,delimiter=',')
 # np.savetxt("image_label.csv",y)
 
 
-#### split train test
-SSK = StratifiedKFold(n_splits=10,random_state=SEED)
-INDEX = []
-for train_index, test_index in SSK.split(x,y):
-  INDEX.append({'train':train_index,'test':test_index})
-train = x[INDEX[GROUP]['train']]
-test = x[INDEX[GROUP]['test']]
-label_train = y[INDEX[GROUP]['train']]
-label_test = y[INDEX[GROUP]['test']]
+# #### split train test
+# SSK = StratifiedKFold(n_splits=10,random_state=SEED)
+# INDEX = []
+# for train_index, test_index in SSK.split(x,y):
+#   INDEX.append({'train':train_index,'test':test_index})
+# train = x[INDEX[GROUP]['train']]
+# test = x[INDEX[GROUP]['test']]
+# label_train = y[INDEX[GROUP]['train']]
+# label_test = y[INDEX[GROUP]['test']]
 
 # unique, counts = np.unique(label_train, return_counts=True)
 # print(np.asarray((unique,counts)).T)

@@ -8,6 +8,7 @@ from skimage.feature import canny
 from sklearn.cluster import KMeans
 from scipy import ndimage as ndi
 from scipy.spatial import distance
+from sklearn.model_selection import StratifiedKFold
 import os,sys,cv2,math
 
 def extractImage_contextual(PATH):
@@ -71,7 +72,29 @@ def extractImage_orb(PATH):
   kp, des = orb.detectAndCompute(gray,None)
   return des
 
-def extractImageFeature(data,img_root,opt='contextual',random_state = 2000):
+def build_histrogram(x,centroids,labels,n_clusters):
+  c = 0
+  x_keypoint = x
+  x = []
+  nmin = 999999
+  nmax = 0
+  print(len(x_keypoint))
+  for i in range(len(x_keypoint)):
+    feature = np.zeros(n_clusters)
+    nmax = len(x_keypoint[i]) if len(x_keypoint[i])> nmax else nmax
+    nmin = len(x_keypoint[i]) if len(x_keypoint[i])< nmin else nmin
+    for j in range(len(x_keypoint[i])):
+      cluster = labels[c]
+      sim = distance.euclidean(x_keypoint[i][j], centroids[cluster]) #find similarity betwee keypoint and centroid of cluster of this keypoint
+      feature[cluster]+= sim
+      c+=1
+    x.append(feature)
+  x = np.array(x)
+  print("min ",nmin)
+  print("max ",nmax)
+  return x
+
+def extractImageFeature(data,img_root,label=[],opt='contextual',random_state = 2000,split=False,save=False,GROUP = 0):
 
   x = []
   miss_shape = 0
@@ -103,43 +126,72 @@ def extractImageFeature(data,img_root,opt='contextual',random_state = 2000):
 
     x.append(feature)
   x = np.array(x)
-  if(opt in ['sift','surf','orb']):
-    for i in range(len(x)):
-      if(np.shape(x[i])==()):
-        x[i] = np.zeros(miss_shape)
-      else:
-        norm = Normalizer()
-        x[i] = norm.fit_transform(x[i])
-    x_cluster = np.vstack(x)
-    print("START Clustering")
-    # n_clusters = 1000
-    n_clusters = math.floor(math.sqrt(len(x_cluster)))
-    print("Total keypoint : ",len(x_cluster))
-    print("Number of cluster : ",n_clusters)
-    x_cluster = KMeans(n_clusters=n_clusters,random_state = random_state).fit(x_cluster)
-    centroids = x_cluster.cluster_centers_
-    labels = x_cluster.labels_
-    print("EXTRACT HISTOGRAM")
-    c = 0
-    x_keypoint = x
-    x = []
-    nmin = 999999
-    nmax = 0
-    print(len(x_keypoint))
-    for i in range(len(x_keypoint)):
-      feature = np.zeros(n_clusters)
-      nmax = len(x_keypoint[i]) if len(x_keypoint[i])> nmax else nmax
-      nmin = len(x_keypoint[i]) if len(x_keypoint[i])< nmin else nmin
-      for j in range(len(x_keypoint[i])):
-        cluster = labels[c]
-        sim = distance.euclidean(x_keypoint[i][j], centroids[cluster]) #find similarity betwee keypoint and centroid of cluster of this keypoint
-        feature[cluster]+= sim
-        c+=1
-      x.append(feature)
+  if( not split ):
+    if(opt in ['sift','surf','orb']):
+      print(x)
+      for i in range(len(x)):
+        if(np.shape(x[i])==()):
+          x[i] = np.zeros(miss_shape)
+        else:
+          norm = Normalizer()
+          x[i] = norm.fit_transform(x[i])
+      x_cluster = np.vstack(x)
+      print("START Clustering")
+      n_clusters = 10
+      # n_clusters = math.floor(math.sqrt(len(x_cluster)))
+      print("Total keypoint : ",len(x_cluster))
+      print("Number of cluster : ",n_clusters)
+      cluster = KMeans(n_clusters=n_clusters,random_state = random_state).fit(x_cluster)
+      centroids = cluster.cluster_centers_
+      labels = cluster.labels_
+      print("EXTRACT HISTOGRAM")
+      x = build_histrogram(x,centroids,labels,n_clusters)
+    return x
+  else:
     x = np.array(x)
-    print("min ",nmin)
-    print("max ",nmax)
-  return x
+    y = label
+    #### split train test
+    SSK = StratifiedKFold(n_splits=10,random_state=random_state)
+    INDEX = []
+    for train_index, test_index in SSK.split(x,y):
+      INDEX.append({'train':train_index,'test':test_index})
+    train = x[INDEX[GROUP]['train']]
+    test = x[INDEX[GROUP]['test']]
+    label_train = y[INDEX[GROUP]['train']]
+    label_test = y[INDEX[GROUP]['test']]
+    print(np.shape(test))
+    if(opt in ['sift','surf','orb']):
+      for i in range(len(train)):
+        if(np.shape(train[i])==()):
+          train[i] = np.zeros(miss_shape)
+        else:
+          norm = Normalizer()
+          train[i] = norm.fit_transform(train[i])
+      for i in range(len(test)):
+        if(np.shape(test[i])==()):
+          test[i] = np.zeros(miss_shape)
+        else:
+          norm = Normalizer()
+          test[i] = norm.fit_transform(test[i])
+
+      train_cluster = np.vstack(train)
+      test_cluster = np.vstack(test)
+      print("START Clustering")
+      # n_clusters = 1000
+      n_clusters = math.floor(math.sqrt(len(train_cluster)))
+      print("Total keypoint : ",len(train_cluster))
+      print("Number of cluster : ",n_clusters)
+      cluster = KMeans(n_clusters=n_clusters,random_state = random_state).fit(train_cluster)
+      centroids = cluster.cluster_centers_
+      train_cluster_labels = cluster.labels_
+      test_cluster_labels = cluster.predict(test_cluster)
+      print("EXTRACT HISTOGRAM")
+      train = build_histrogram(train,centroids,train_cluster_labels,n_clusters)
+      test = build_histrogram(test,centroids,test_cluster_labels,n_clusters)
+      print(train)
+      
+    return train,test,label_train,label_test
+
 
 # # # feature = extractImage_contextual("coldstorage_img/00a3918b5a5df518dc9379d94a7407b4.jpg")
 # # # feature = extractImage_contextual("giant_img/00eab77ac36f6a4f77e1be12124e14ab.jpg")
