@@ -34,9 +34,14 @@ elif input_file == 2:
   input_file = "giant_path.csv"
 elif input_file == 3:
   input_file = "redmart_path.csv"
-img_root = input_file.replace("_path.csv","")+"_img"
+store = input_file.replace("_path.csv","")
+img_root = store+"_img"
 print("Opertion contextural,sift,surf,orb")
 opt = input()
+print("Number of K cluster")
+nfeature = int(input())
+print("Number of C in SVM")
+C = float(input())
 print("SEED")
 SEED = 2000
 GROUP = int(input())
@@ -44,43 +49,8 @@ print(input_file)
 df = pd.read_csv(input_file, header = 0)
 
 
-### Preprocessing  start ###
-###
-# Subset dataframe to just columns category_path and name
-df = df.loc[:,['category_path','name','img_file']]
-# Make a duplicate of input df
-df_original=df
-df_dedup=df.drop_duplicates(subset='name')
-# print(len(np.unique(df_dedup['name'])))
-df=df_dedup
-#drop paths that have 1 member
-df_count = df.groupby(['category_path']).count()
-df_count = df_count[df_count == 1]
-df_count = df_count.dropna()
-df = df.loc[~df['category_path'].isin(list(df_count.index))]
-df = df.reset_index(drop=True)
-print("Uniqued df by name : "+str(len(df['name'])))
-####### label encoder
-number = LabelEncoder()
-y = df['category_path']
-y = y.astype(str) 
-y = number.fit_transform(y)
-print(np.shape(np.unique(y)))
-##### image processing
-
-x = extractImageFeature(df['img_file'],img_root,opt=opt,random_state=SEED)
-print(x)
-# #### normalize img
-# norm = Normalizer()
-# x = norm.fit_transform(x)
-
-# y = y[:20]
-####
-### Preprocessing end ###
-
-# output = pd.DataFrame(pd.Series(x))
-np.savetxt("image_feature_surf_"+str(GROUP)+".csv",x,delimiter=',')
-# np.savetxt("image_label.csv",y)
+x = np.loadtxt(store+"_feature_"+opt+"_"+str(GROUP)+".csv",delimiter=',')
+y = np.loadtxt(store+"_label.csv",delimiter=',')
 
 
 #### split train test
@@ -98,7 +68,7 @@ label_test = y[INDEX[GROUP]['test']]
 
 ##### classification
 print(train)
-clf = SVC(C=1,probability=True,random_state=SEED).fit(train, label_train)
+clf = SVC(C=C,probability=True,random_state=SEED).fit(train, label_train)
 pred = clf.predict(train)
 probas_ = clf.predict_proba(train)
 acc,precision,recall,fbeta,auc_score = getResult(pred,label_train,probas_)

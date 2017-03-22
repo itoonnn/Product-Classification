@@ -112,8 +112,9 @@ def extractImageFeature(data,img_root,opt='contextual',random_state = 2000):
         x[i] = norm.fit_transform(x[i])
     x_cluster = np.vstack(x)
     print("START Clustering")
-    n_clusters = 1000
-    # n_clusters = math.floor(math.sqrt(len(x_cluster)))
+    # n_clusters = 1000
+    n_clusters = math.floor(math.sqrt(len(x_cluster)))
+    print("Total keypoint : ",len(x_cluster))
     print("Number of cluster : ",n_clusters)
     x_cluster = KMeans(n_clusters=n_clusters,random_state = random_state).fit(x_cluster)
     centroids = x_cluster.cluster_centers_
