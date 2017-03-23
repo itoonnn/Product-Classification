@@ -27,5 +27,5 @@ y = df['category_path']
 y = y.astype(str) 
 y = number.fit_transform(y)
 print(np.shape(df['img_file']))
-
-x = extractImageFeature(df['img_file'][:10],img_root,label=y[:10],opt="sift",split=True,random_state=2000)
+for i in range(0,10):
+  x = extractImageFeature(df['img_file'],img_root,label=y,opt="sift",split=True,random_state=2000,save=True,GROUP=i)
