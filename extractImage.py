@@ -189,7 +189,7 @@ def extractImageFeature(data,img_root,label=[],opt='contextual',random_state = 2
       train = build_histrogram(train,centroids,train_cluster_labels,n_clusters)
       test = build_histrogram(test,centroids,test_cluster_labels,n_clusters)
       if(save):
-        np.savetxt("feature_"+store+"_"+opt+"_"+str(GROUP)+".csv",x,delimiter=',')
+        np.savetxt("feature_"+store+"_"+opt+"_"+str(GROUP)+".csv",x,delimiter=',',fmt='%.18e')
         np.savetxt("label_"+store+"_"+opt+"_"+str(GROUP)+".csv",y)
       
     return train,test,label_train,label_test
