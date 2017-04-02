@@ -1,11 +1,10 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from sklearn.preprocessing import Normalizer
 from skimage import io, filters, exposure, img_as_float, morphology
 from skimage.color import rgb2gray
 from skimage.feature import canny
-from sklearn.cluster import KMeans
+from sklearn.cluster import MiniBatchKMeans
 from scipy import ndimage as ndi
 from scipy.spatial import distance
 from sklearn.model_selection import StratifiedKFold
@@ -141,7 +140,7 @@ def extractImageFeature(data,img_root,label=[],opt='contextual',random_state = 2
       # n_clusters = math.floor(math.sqrt(len(x_cluster)))
       print("Total keypoint : ",len(x_cluster))
       print("Number of cluster : ",n_clusters)
-      cluster = KMeans(n_clusters=n_clusters,random_state = random_state).fit(x_cluster)
+      cluster = MiniBatchKMeans(n_clusters=n_clusters,random_state = random_state).fit(x_cluster)
       centroids = cluster.cluster_centers_
       labels = cluster.labels_
       print("EXTRACT HISTOGRAM")
@@ -181,7 +180,7 @@ def extractImageFeature(data,img_root,label=[],opt='contextual',random_state = 2
       n_clusters = math.floor(math.sqrt(len(train_cluster)))
       print("Total keypoint : ",len(train_cluster))
       print("Number of cluster : ",n_clusters)
-      cluster = KMeans(n_clusters=n_clusters,random_state = random_state).fit(train_cluster)
+      cluster = MiniBatchKMeans(n_clusters=n_clusters,random_state = random_state).fit(train_cluster)
       centroids = cluster.cluster_centers_
       train_cluster_labels = cluster.labels_
       test_cluster_labels = cluster.predict(test_cluster)
