@@ -8,6 +8,7 @@ SEED = 2000
 STORE = ["coldstorage","fairprice","giant","redmart"]
 FUNCTION = ["contextual","sift","surf","orb"]
 num_k = ["contextual","sqrt(n)","sqrt(half(n))"]
+CLASSIFIER = ['nb','lr','nn','svmln','svmrbf','svmpoly']
 PATH = "image_feature/"
 
 # Specify input csv file
@@ -40,19 +41,30 @@ print("Neural Network == 2")
 print("SVM-Linear == 3")
 print("SVM-RBF == 4")
 print("SVM-Poly == 5")
-CLASSIFIER = int(input())
+CLASSIFIER = CLASSIFIER[int(input())]
 
-for i in range(10):
-  file_train = PATH+"/"+"_".join(["feature",STORE,FUNCTION,"train",str(i)])+".csv"
-  file_test = PATH+"/"+"_".join(["feature",STORE,FUNCTION,"test",str(i)])+".csv"
-  file_train_label = PATH+"/"+"_".join(["label",STORE,FUNCTION,"train",str(i)])+".csv"
-  file_test_label = PATH+"/"+"_".join(["label",STORE,FUNCTION,"test",str(i)])+".csv"
-  train = np.loadtxt(file_train,delimiter=',')
-  test = np.loadtxt(file_test,delimiter=',')
-  label_train = np.loadtxt(file_train_label,delimiter=',')
-  label_test = np.loadtxt(file_test_label,delimiter=',')
-  if(CLASSIFIER == 0):
-    naivebeys_process(SEED,i,-5,5,train,test,label_train,label_test)
+print("GROUP")
+GROUP = int(input())
+
+file_train = PATH+"/"+"_".join(["feature",STORE,FUNCTION,"train",str(GROUP)])+".csv"
+file_test = PATH+"/"+"_".join(["feature",STORE,FUNCTION,"test",str(GROUP)])+".csv"
+file_train_label = PATH+"/"+"_".join(["label",STORE,FUNCTION,"train",str(GROUP)])+".csv"
+file_test_label = PATH+"/"+"_".join(["label",STORE,FUNCTION,"test",str(GROUP)])+".csv"
+train = np.loadtxt(file_train,delimiter=',')
+test = np.loadtxt(file_test,delimiter=',')
+label_train = np.loadtxt(file_train_label,delimiter=',')
+label_test = np.loadtxt(file_test_label,delimiter=',')
+if(CLASSIFIER == 'nb'):
+  result = naivebeys_process(SEED,GROUP,-5,5,train,test,label_train,label_test)
+
+fname = "_".join(["result",STORE,FUNCTION,num_k,CLASSIFIER])
+if(not os.path.isfile(fname)):
+  result.to_csv(fname)
+  print("create ",fname)
+else:
+  with open(fname, 'a') as f:
+    result.to_csv(f, header=False)
+print(result)
 
 
 ##### classification
