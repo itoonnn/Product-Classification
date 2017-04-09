@@ -52,6 +52,7 @@ for i in range(10):
   label_train = np.loadtxt(file_train_label,delimiter=',')
   label_test = np.loadtxt(file_test_label,delimiter=',')
   if(CLASSIFIER == 0):
+    naivebeys_process(SEED,i,-5,5,train,test,label_train,label_test)
 
 
 ##### classification

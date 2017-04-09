@@ -25,7 +25,8 @@ def getResult(predictions,labelData,probas_):
   auc_score = roc_auc_fixed(labelData,predictions)
   return acc,precision,recall,fbeta,auc_score
 def naivebeys_process(SEED,GROUP,START,END,train,test,label_train,label_test):
-  print "\nMultinomialNB"
+  print("\nMultinomialNB")
+  END += 1
   fname = "crossval_nb_result_"+str(GROUP)+".csv"
   #Tune Alpha
   alpha = 0.0
@@ -35,6 +36,8 @@ def naivebeys_process(SEED,GROUP,START,END,train,test,label_train,label_test):
 
   dtype = [('ngram',int),('alpha',float),('score',float),('std',float)]
   scores = pd.DataFrame(dtype = dtype)
+  if(os.path.isfile(fname) ):
+    scores.to_csv(fname)
   #tune parameter
   for power in range(START,END,1):
     alpha = GRID_FN(power)
@@ -43,12 +46,11 @@ def naivebeys_process(SEED,GROUP,START,END,train,test,label_train,label_test):
     clf = MultinomialNB(alpha=alpha)
     scores = cross_validation.cross_val_score(clf,train,label_train,cv=10,scoring=roc_auc_my)
     # print scores
-    print ngram,alpha,scores.mean(), scores.std()
+    print(ngram,alpha,scores.mean(), scores.std())
     scores_mean_nv.append(scores.mean())
     scores_std_nv.append(scores.std())
     ### write file
-    if(os.path.isfile(fname) ):
-    else:
+    
 
     ###
 
