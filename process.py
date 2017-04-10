@@ -132,7 +132,7 @@ def neuralnetwork_process(SEED,GROUP,train,test,label_train,label_test):
   parameter_all = [(i) for i in range(10,110,10)]+[(i,i) for i in range(10,110,10)]+[(i,i,i) for i in range(10,110,10)]
   print("All param")
   print(parameter_all)
-  columns = ['seed','hd_node','score','std']
+  columns = ['seed','param','score','std']
 
   df = pd.DataFrame(columns = columns)
   parameter_exist = []
@@ -143,7 +143,7 @@ def neuralnetwork_process(SEED,GROUP,train,test,label_train,label_test):
     data = df.from_csv(fname)
     print("Exist param")
 
-    parameter_exist = list_str2num(data['hd_node'])
+    parameter_exist = list_str2num(data['param'])
     print(parameter_exist)
   #tune parameter
   for param in parameter_all:
@@ -154,19 +154,19 @@ def neuralnetwork_process(SEED,GROUP,train,test,label_train,label_test):
       score = round(scores.mean(),3)
       std = round(scores.std(),3)
       print(GROUP,param,score,std)
-      df = pd.DataFrame([{'seed':GROUP,'hd_node':param,'score':score,'std':std}],columns = columns)
+      df = pd.DataFrame([{'seed':GROUP,'param':param,'score':score,'std':std}],columns = columns)
       ### write file
       with open(fname, 'a') as f:
         df.to_csv(f, header=False)
         print("write\n",df)
       
   data = df.from_csv(fname)
-  parameter_exist = list_str2num(data['hd_node'])
+  parameter_exist = list_str2num(data['param'])
   parameter_exist = [ tuple(int(j) for j in i ) if type(i)==tuple else int(i) for i in parameter_exist]
   if np.array_equal(parameter_all, parameter_exist) or parameter_all == parameter_exist:
     print("Complete all parameter =*=*=*=")
     rec_max = data.sort(['score','std'],ascending=[0,1]).head(1)
-    param_max = str2int(rec_max['hd_node'][0])
+    param_max = str2int(rec_max['param'][0])
 
     ### prediction start ###
     ## classified training
@@ -182,7 +182,7 @@ def neuralnetwork_process(SEED,GROUP,train,test,label_train,label_test):
 
     columns = [
       'seed',
-      'hd_node',
+      'param',
       'train_acc',
       'train_precision',
       'train_recall',
@@ -196,7 +196,7 @@ def neuralnetwork_process(SEED,GROUP,train,test,label_train,label_test):
     ]
     result = pd.DataFrame(pd.Series({
       'seed':GROUP,
-      'hd_node':param_max,
+      'param':param_max,
       'train_acc':train_acc,
       'train_precision':train_precision,
       'train_recall':train_recall,
@@ -307,7 +307,7 @@ def svm_process(SEED,GROUP,train,test,label_train,label_test,kernel='linear'):
     return result
   return 0
   
-def logistic_process(SEED,GROUP,START,END,train,test,label_train,label_test):
+def logistic_process(SEED,GROUP,train,test,label_train,label_test):
   print("\nLogistic Regression")
   END += 1
   fname = "crossval_lr_result.csv"
@@ -316,7 +316,7 @@ def logistic_process(SEED,GROUP,START,END,train,test,label_train,label_test):
   parameter_all = np.array([GRID_FN(i) for i in range(-5,6)])
   print("All param")
   print(parameter_all)
-  columns = ['seed','C','score','std']
+  columns = ['seed','param','score','std']
   df = pd.DataFrame(columns = columns)
   parameter_exist = []
   if(not os.path.isfile(fname)):
@@ -325,29 +325,28 @@ def logistic_process(SEED,GROUP,START,END,train,test,label_train,label_test):
   else:
     data = df.from_csv(fname)
     print("Exist param")
-    parameter_exist = np.array(data['C'])
+    parameter_exist = np.array(data['param'])
     print(parameter_exist)
   #tune parameter
-  for power in range(START,END,1):
-    C = GRID_FN(power)
-    if(C not in parameter_exist):
+  for param in range(parameter_all):
+    if(param not in parameter_exist):
       #cross validation
-      clf = LogisticRegression(random_state=SEED,C=C,n_jobs=-1,multi_class='multinomial',solver='sag')
+      clf = LogisticRegression(random_state=SEED,C=param,n_jobs=-1,multi_class='multinomial',solver='sag')
       scores = cross_validation.cross_val_score(clf,train,label_train,cv=10,scoring=roc_auc_my)
       score = round(scores.mean(),3)
       std = round(scores.std(),3)
       print(GROUP,C,score,std)
-      df = pd.DataFrame([{'seed':GROUP,'C':C,'score':score,'std':std}],columns = columns)
+      df = pd.DataFrame([{'seed':GROUP,'param':param,'score':score,'std':std}],columns = columns)
       ### write file
       with open(fname, 'a') as f:
         df.to_csv(f, header=False)
       
   data = df.from_csv(fname)
-  parameter_exist = np.array(data['C'])
+  parameter_exist = np.array(data['param'])
   if np.array_equal(parameter_all, parameter_exist):
     print("Complete all parameter =*=*=*=")
     rec_max = data.sort(['score','std'],ascending=[0,1]).head(1)
-    C_max = float(rec_max['C'])
+    C_max = float(rec_max['param'])
 
     ### prediction start ###
     ## classified training
@@ -362,7 +361,7 @@ def logistic_process(SEED,GROUP,START,END,train,test,label_train,label_test):
 
     columns = [
       'seed',
-      'C',
+      'param',
       'train_acc',
       'train_precision',
       'train_recall',
@@ -376,7 +375,7 @@ def logistic_process(SEED,GROUP,START,END,train,test,label_train,label_test):
     ]
     result = pd.DataFrame(pd.Series({
       'seed':GROUP,
-      'C':C_max,
+      'param':C_max,
       'train_acc':train_acc,
       'train_precision':train_precision,
       'train_recall':train_recall,
