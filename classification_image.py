@@ -8,7 +8,7 @@ SEED = 2000
 STORE = ["coldstorage","fairprice","giant","redmart"]
 FUNCTION = ["contextual","sift","surf","orb"]
 num_k = ["contextual","sqrt(n)","sqrt(half(n))"]
-CLASSIFIER = ['nb','lr','nn','svmln','svmrbf','svmpoly']
+CLASSIFIER = ['nb','lr','nn','svm-linear','svm-rbf','svm-poly']
 PATH = "image_feature/"
 
 # Specify input csv file
@@ -56,6 +56,14 @@ label_train = np.loadtxt(file_train_label,delimiter=',')
 label_test = np.loadtxt(file_test_label,delimiter=',')
 if(CLASSIFIER == 'nb'):
   result = naivebeys_process(SEED,GROUP,-5,5,train,test,label_train,label_test)
+elif(CLASSIFIER == 'nn'):
+  result = neuralnetwork_process(SEED,GROUP,train,test,label_train,label_test)
+elif(CLASSIFIER == 'svm-linear'):
+  result = svm_process(SEED,GROUP,train,test,label_train,label_test,kernel='linear')
+elif(CLASSIFIER == 'svm-rbf'):
+  result = svm_process(SEED,GROUP,train,test,label_train,label_test,kernel='rbf')
+elif(CLASSIFIER == 'svm-poly'):
+  result = svm_process(SEED,GROUP,train,test,label_train,label_test,kernel='poly')
 
 fname = "_".join(["result",STORE,FUNCTION,num_k,CLASSIFIER])
 if(not os.path.isfile(fname)):
