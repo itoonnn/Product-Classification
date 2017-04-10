@@ -8,7 +8,7 @@ SEED = 2000
 STORE = ["coldstorage","fairprice","giant","redmart"]
 FUNCTION = ["contextual","sift","surf","orb"]
 num_k = ["contextual","sqrt(n)","sqrt(half(n))"]
-CLASSIFIER = ['nb','lr','nn','svmln','svmrbf','svmpoly']
+CLASSIFIER = ['nb','lr','nn','svm-linear','svm-rbf','svm-poly']
 PATH = "image_feature/"
 
 # Specify input csv file

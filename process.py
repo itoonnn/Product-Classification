@@ -32,6 +32,13 @@ def predict_process(data,labelData,clf):
   acc,precision,recall,fbeta,auc_score = getResult(predictions,labelData,probas_)
   return acc,precision,recall,fbeta,auc_score
 
+def str2float(i):
+  return tuple(float(j) for j in i[1:-1].split(','))
+def str2int(i):
+  return tuple(int(j) for j in i[1:-1].split(','))
+def list_str2num(list):
+  return [ str2float(i) if len(i)>3 else float(i) for i in list]
+
 def naivebeys_process(SEED,GROUP,START,END,train,test,label_train,label_test):
   print("\nMultinomialNB")
   END += 1
@@ -43,6 +50,7 @@ def naivebeys_process(SEED,GROUP,START,END,train,test,label_train,label_test):
   print(parameter_all)
   columns = ['seed','alpha','score','std']
   df = pd.DataFrame(columns = columns)
+  parameter_exist = []
   if(not os.path.isfile(fname)):
     df.to_csv(fname)
     print("create ",fname)
@@ -116,6 +124,189 @@ def naivebeys_process(SEED,GROUP,START,END,train,test,label_train,label_test):
   return 0
 
 
+def neuralnetwork_process(SEED,GROUP,train,test,label_train,label_test):
+  print("\nNeural Networks")
+  fname = "crossval_nn_result.csv"
+  #Tune Alpha
+  layer = 3
+  parameter_all = [(i) for i in range(10,110,10)]+[(i,i) for i in range(10,110,10)]+[(i,i,i) for i in range(10,110,10)]
+  print("All param")
+  print(parameter_all)
+  columns = ['seed','hd_node','score','std']
+
+  df = pd.DataFrame(columns = columns)
+  parameter_exist = []
+  if(not os.path.isfile(fname)):
+    df.to_csv(fname)
+    print("create ",fname)
+  else:
+    data = df.from_csv(fname)
+    print("Exist param")
+
+    parameter_exist = list_str2num(data['hd_node'])
+    print(parameter_exist)
+  #tune parameter
+  for param in parameter_all:
+    if(param not in parameter_exist):
+      #cross validation
+      clf = MLPClassifier(hidden_layer_sizes=param,random_state=SEED)
+      scores = cross_validation.cross_val_score(clf,train,label_train,cv=10,scoring=roc_auc_my)
+      score = round(scores.mean(),3)
+      std = round(scores.std(),3)
+      print(GROUP,param,score,std)
+      df = pd.DataFrame([{'seed':GROUP,'hd_node':param,'score':score,'std':std}],columns = columns)
+      ### write file
+      with open(fname, 'a') as f:
+        df.to_csv(f, header=False)
+        print("write\n",df)
+      
+  data = df.from_csv(fname)
+  parameter_exist = list_str2num(data['hd_node'])
+  parameter_exist = [ tuple(int(j) for j in i ) if type(i)==tuple else int(i) for i in parameter_exist]
+  if np.array_equal(parameter_all, parameter_exist) or parameter_all == parameter_exist:
+    print("Complete all parameter =*=*=*=")
+    rec_max = data.sort(['score','std'],ascending=[0,1]).head(1)
+    param_max = str2int(rec_max['hd_node'][0])
+
+    ### prediction start ###
+    ## classified training
+    clf = MLPClassifier(hidden_layer_sizes=param_max,random_state=SEED).fit(train, label_train)
+
+    print(clf)
+
+    # Check accuracy but this is based on the same data we used for training
+    # Use classifier to train and test
+    print('Result with NaiveBeys =*=*=*=*=')
+    train_acc,train_precision,train_recall,train_f1,train_auc = predict_process(train,label_train,clf)
+    test_acc,test_precision,test_recall,test_f1,test_auc = predict_process(test,label_test,clf)
+
+    columns = [
+      'seed',
+      'hd_node',
+      'train_acc',
+      'train_precision',
+      'train_recall',
+      'train_f1',
+      'train_auc',
+      'test_acc',
+      'test_precision',
+      'test_recall',
+      'test_f1',
+      'test_auc',
+    ]
+    result = pd.DataFrame(pd.Series({
+      'seed':GROUP,
+      'hd_node':param_max,
+      'train_acc':train_acc,
+      'train_precision':train_precision,
+      'train_recall':train_recall,
+      'train_f1':train_f1,
+      'train_auc':train_auc,
+      'test_acc':test_acc,
+      'test_precision':test_precision,
+      'test_recall':test_recall,
+      'test_f1':test_f1,
+      'test_auc':test_auc,
+    }))
+    return result
+  return 0
+
+def svm_process(SEED,GROUP,train,test,label_train,label_test,kernel='linear'):
+  print("\nNeural Networks")
+  fname = "crossval_svm_"+kernel+"_result.csv"
+  #Tune Alpha
+  layer = 3
+  if(kernel == 'linear'):
+    parameter_all = [GRID_FN(i) for i in range(-5,6)]
+  elif(kernel == 'rbf'):
+    parameter_all = [(GRID_FN(j),GRID_FN(i)) for j in range(-5,6) for i in range(-5,6)]
+  elif(kernel == 'poly'):
+    parameter_all = [(j,GRID_FN(i)) for j in range(1,6) for i in range(-5,6)]
+  columns = ['seed','param','score','std']
+  print(parameter_all)
+  
+  df = pd.DataFrame(columns = columns)
+  parameter_exist = []
+  if(not os.path.isfile(fname)):
+    df.to_csv(fname)
+    print("create ",fname)
+  else:
+    data = df.from_csv(fname)
+    print("Exist param")
+    print(data['param'])
+    parameter_exist = list_str2num(data['param'])
+    print(parameter_exist)
+  #tune parameter
+  for param in parameter_all:
+    if(param not in parameter_exist):
+      #cross validation
+      if(kernel=="linear"):
+        clf = SVC(C=param,kernel=kernel,probability=True,random_state=SEED)
+      elif(kernel=="rbf"):
+        clf = SVC(C=param[1],gamma=param[0],kernel=kernel,probability=True,random_state=SEED)
+      elif(kernel=="poly"):
+        clf = SVC(C=param[1],degree=param[0],kernel=kernel,probability=True,random_state=SEED)
+      scores = cross_validation.cross_val_score(clf,train,label_train,cv=10,scoring=roc_auc_my)
+      score = round(scores.mean(),3)
+      std = round(scores.std(),3)
+      print(GROUP,param,score,std)
+      df = pd.DataFrame([{'seed':GROUP,'param':param,'score':score,'std':std}],columns = columns)
+
+      ### write file
+      with open(fname, 'a') as f:
+        df.to_csv(f, header=False)
+        print("write ",df)
+      
+  data = df.from_csv(fname)
+  parameter_exist = np.array(data['hd_node'])
+  if np.array_equal(parameter_all, parameter_exist):
+    print("Complete all parameter =*=*=*=")
+    rec_max = data.sort(['score','std'],ascending=[0,1]).head(1)
+    param_max = float(rec_max['hd_node'])
+
+    ### prediction start ###
+    ## classified training
+    clf = MLPClassifier(hidden_layer_sizes=param_max,random_state=SEED).fit(train, label_train)
+    print(clf)
+
+    # Check accuracy but this is based on the same data we used for training
+    # Use classifier to train and test
+    print('Result with NaiveBeys =*=*=*=*=')
+    train_acc,train_precision,train_recall,train_f1,train_auc = predict_process(train,label_train,clf)
+    test_acc,test_precision,test_recall,test_f1,test_auc = predict_process(test,label_test,clf)
+
+    if(kernel == 'linear'):
+      columns = [
+        'seed',
+        'param',
+        'train_acc',
+        'train_precision',
+        'train_recall',
+        'train_f1',
+        'train_auc',
+        'test_acc',
+        'test_precision',
+        'test_recall',
+        'test_f1',
+        'test_auc',
+      ]
+      result = pd.DataFrame(pd.Series({
+        'seed':GROUP,
+        'param':param_max,
+        'train_acc':train_acc,
+        'train_precision':train_precision,
+        'train_recall':train_recall,
+        'train_f1':train_f1,
+        'train_auc':train_auc,
+        'test_acc':test_acc,
+        'test_precision':test_precision,
+        'test_recall':test_recall,
+        'test_f1':test_f1,
+        'test_auc':test_auc,
+      }))
+    return result
+  return 0
+  
 def logistic_process(SEED,GROUP,START,END,train,test,label_train,label_test):
   print("\nLogistic Regression")
   END += 1
