@@ -58,8 +58,14 @@ if(CLASSIFIER == 'nb'):
   result = naivebeys_process(SEED,GROUP,-5,5,train,test,label_train,label_test)
 elif(CLASSIFIER == 'lr'):
   result = logistic_process(SEED,GROUP,-5,5,train,test,label_train,label_test)
-
-
+elif(CLASSIFIER == 'nn'):
+  result = logistic_process(SEED,GROUP,train,test,label_train,label_test)
+elif(CLASSIFIER == 'svm-linear'):
+  result = logistic_process(SEED,GROUP,train,test,label_train,label_test,kernel='linear')
+elif(CLASSIFIER == 'svm-rbf'):
+  result = logistic_process(SEED,GROUP,train,test,label_train,label_test,kernel='rbf')
+elif(CLASSIFIER == 'svm-poly'):
+  result = logistic_process(SEED,GROUP,train,test,label_train,label_test,kernel='poly')
 
 fname = "_".join(["result",STORE,FUNCTION,num_k,CLASSIFIER])
 if(not os.path.isfile(fname)):
