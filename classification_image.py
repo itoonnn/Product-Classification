@@ -56,6 +56,10 @@ label_train = np.loadtxt(file_train_label,delimiter=',')
 label_test = np.loadtxt(file_test_label,delimiter=',')
 if(CLASSIFIER == 'nb'):
   result = naivebeys_process(SEED,GROUP,-5,5,train,test,label_train,label_test)
+elif(CLASSIFIER == 'lr'):
+  result = logistic_process(SEED,GROUP,-5,5,train,test,label_train,label_test)
+
+
 
 fname = "_".join(["result",STORE,FUNCTION,num_k,CLASSIFIER])
 if(not os.path.isfile(fname)):
