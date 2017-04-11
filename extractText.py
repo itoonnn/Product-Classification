@@ -7,9 +7,14 @@ from gensim.parsing.preprocessing import STOPWORDS
 from gensim.models.doc2vec import LabeledSentence
 from gensim.models import Doc2Vec
 from gensim import corpora
-
+import scipy
+from random import shuffle
 
 import os,sys
+
+def sentences_perm(sentences):
+        shuffle(sentences)
+        return sentences
 
 def extract_tfid(doc):
   # Remove numbers in product name
@@ -22,17 +27,24 @@ def extract_w2v(doc,label):
   documents = doc
   sentences = [[word for word in document.split() if word not in STOPWORDS and len(word)>1] for document in documents]
   bigram_transformer = gensim.models.Phrases(sentences)
-  documents = [LabeledSentence(words = bigram_transformer[sentences[i]], tags = str(i)) for i in range(len(sentences))]
+  documents = [LabeledSentence(words = bigram_transformer[sentences[i]], tags = 'sent_'+str(i)) for i in range(len(sentences))]
   model = gensim.models.doc2vec.Doc2Vec(dm=0, # DBOW
-          size=400, 
-          window=8, 
-          min_count=5,  
-          dbow_words = 1)
+          hs=1,
+          size=10, 
+          alpha=0.01, 
+          min_alpha=0.0001,
+          window=15, 
+          min_count=1)
   # build model
   model.build_vocab(documents)
+
   # train model
-  model.train(documents)
+  print(documents)
+  for epoch in range(10):
+    model.train(shuffle(documents))
   
+  model.save("test.model")
+  model.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
   return model,documents
 
 def extractTextFeature(data,label=[],opt="tfid",split=False,random_state = 2000,save=False,GROUP = 0):
@@ -103,6 +115,15 @@ print("Uniqued df by name : "+str(len(df['name'])))
 x,token = extractTextFeature(df['name'],label=df['category_path'],opt='w2v')
 
 print(token[0][0])
-print(x.infer_vector(token[0][0]))
-
+v1=x.infer_vector(token[0][0])
+x = Doc2Vec.load('test.model')
+v2=x.infer_vector(token[0][0])
+x = Doc2Vec.load('test.model')
+v3=x.infer_vector(token[0][0])
+print(v1)
+print(v2)
+print(v3)
+# print(x.docvecs['sent_0'])
+# for key in x.docvecs:
+#   print(key)
 
