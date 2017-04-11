@@ -54,17 +54,21 @@ train = np.loadtxt(file_train,delimiter=',')
 test = np.loadtxt(file_test,delimiter=',')
 label_train = np.loadtxt(file_train_label,delimiter=',')
 label_test = np.loadtxt(file_test_label,delimiter=',')
-result = image_classification_process(train,test,label_train,label_test,SEED=SEED,GROUP=GROUP,classifier=CLASSIFIER,feature=FUNCTION,numk=num_k)
 
+result = image_classification_process(train,test,label_train,label_test,SEED=SEED,GROUP=GROUP,classifier=CLASSIFIER,feature=FUNCTION,numk=num_k)
+print(result)
 fname = "RESULT_IMAGE_CLASSIFICATION.csv"
 if(not os.path.isfile(fname)):
   result.to_csv(fname)
   print("create ",fname)
 else:
-  with open(fname, 'a') as f:
-    result.to_csv(f, header=False)
-print(result)
-
+  exist = pd.DataFrame.from_csv(fname)
+  if(len(exist.loc[(exist['seed'] == GROUP) & (exist['classifier'] == CLASSIFIER) & (exist['feature'] == FUNCTION) & (exist['numk'] == num_k) ])==0):
+    with open(fname, 'a') as f:
+      result.to_csv(f, header=False)
+      print("Saved")
+  else:
+    print("Already Exist")
 
 ##### classification
 # clf = SVC(C=1,probability=True,random_state=SEED).fit(train, label_train)

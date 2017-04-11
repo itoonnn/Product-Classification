@@ -39,8 +39,10 @@ def str2int(i):
 def list_str2num(list):
   return [ str2float(i) if len(i)>3 else float(i) for i in list]
 
-def classifier(name,param,SEED=2000):
+def classification(name,param,SEED=2000):
+  print(name)
   if(name == "NeuralNetwork"):
+    param = str2int(param)
     return MLPClassifier(hidden_layer_sizes=param,random_state=SEED)
   elif(name == "LogisticRegression"):
     return LogisticRegression(random_state=SEED,C=param,n_jobs=-1,multi_class='multinomial',solver='sag')
@@ -49,12 +51,15 @@ def classifier(name,param,SEED=2000):
   elif(name == "SVM-Linear"):
     return SVC(C=param,kernel='linear',probability=True,random_state=SEED)
   elif(name == "SVM-RBF"):
+    param = str2float(param)
     return SVC(C=param[1],gamma=param[0],kernel='rbf',probability=True,random_state=SEED)
   elif(name == "SVM-Poly"):
+    param = str2float(param)
     return SVC(C=param[1],degree=param[0],kernel='poly',probability=True,random_state=SEED)
 
-def init_param(classifier):
-  if("NeuralNetwork" == classifier):
+def init_params(classifier):
+  print(classifier)
+  if(classifier == "NeuralNetwork"):
     return [(i) for i in range(10,110,10)]+[(i,i) for i in range(10,110,10)]+[(i,i,i) for i in range(10,110,10)]
   elif("SVM-RBF" == classifier):
     return [(GRID_FN(j),GRID_FN(i)) for j in range(-5,6) for i in range(-5,6)]
@@ -62,14 +67,21 @@ def init_param(classifier):
     return [(j,GRID_FN(i)) for j in range(1,6) for i in range(-5,6)]
   else:
     return [GRID_FN(i) for i in range(-5,6)]
-def param_interpreter(data,classifier='default'):
-  if("NeuralNetwork" == classifier)
+def params_interpreter(data,classifier='default'):
+  if("NeuralNetwork" == classifier):
     parameter_exist = list_str2num(data)
     return [ tuple(int(j) for j in i ) if type(i)==tuple else int(i) for i in parameter_exist]
   elif(classifier in ["SVM-RBF","SVM-Poly"]):
     return list_str2num(data)
   else:
-    return data
+    return list(data)
+def param_interpreter(rec,classifier='default'):
+  if("NeuralNetwork" == classifier):
+    return str2int(rec)
+  elif(classifier in ["SVM-RBF","SVM-Poly"]):
+    return str2float(rec)
+  else:
+    return rec
 
 def image_classification_process(train,test,label_train,label_test,SEED=2000,GROUP=0,classifier="Naivebayes",feature='sift',numk='sqrt(n)'):
 # SEED = 2000
@@ -79,7 +91,7 @@ def image_classification_process(train,test,label_train,label_test,SEED=2000,GRO
 # numk = ['contexual','sqrt(n)','sqrt(half(n))']
   print("CLASSIFICATION with "+feature+" "+numk+" by using "+classifier)
   filename = "_".join(["crossval",classifier,feature,numk])+".csv"
-  parameter_all = init_param(classifier)
+  parameter_all = init_params(classifier)
 
   print("All param")
   print(parameter_all)
@@ -94,38 +106,42 @@ def image_classification_process(train,test,label_train,label_test,SEED=2000,GRO
     data = df.from_csv(filename)
     print("Exist param")
 
-    parameter_exist = list_str2num(data['param'])
+    parameter_exist = params_interpreter(data['param'],classifier=classifier)
     print(parameter_exist)
 
+    print("Run param")
+    parameter_run = list(set(parameter_all) - set(parameter_exist))
+    print(parameter_run)
   #tune parameter
-  for param in parameter_all:
-    if(param not in parameter_exist):
-      #cross validation
-      clf = classifier(classifier,param,SEED=SEED)
-      scores = cross_validation.cross_val_score(clf,train,label_train,cv=10,scoring=roc_auc_my)
-      score = round(scores.mean(),3)
-      std = round(scores.std(),3)
-      print(GROUP,param,score,std)
-      df = pd.DataFrame([{'seed':GROUP,'param':param,'score':score,'std':std}],columns = columns)
-      ### write file
-      with open(filename, 'a') as f:
-        df.to_csv(f, header=False)
-        print("write\n",df)
-  data = df.from_csv(fname)
-  parameter_exist = param_interpreter(data['param'])
-  if np.array_equal(parameter_all, parameter_exist) or parameter_all == parameter_exist:
-    print("Complete all parameter =*=*=*=")
+  for param in parameter_run:
+    #cross validation
+    clf = classification(classifier,param,SEED=SEED)
+    scores = cross_validation.cross_val_score(clf,train,label_train,cv=10,scoring=roc_auc_my)
+    score = round(scores.mean(),3)
+    std = round(scores.std(),3)
+    print(GROUP,param,score,std)
+    df = pd.DataFrame([{'seed':GROUP,'param':param,'score':score,'std':std}],columns = columns)
+    ### write file
+    with open(filename, 'a') as f:
+      df.to_csv(f, header=False)
+      print("write\n",df)
+  data = df.from_csv(filename)
+  parameter_exist = params_interpreter(data['param'])
+
+  if list(set(parameter_all) - set(parameter_exist)) == []:
+    print("\nComplete all parameter =*=*=*=\n")
     rec_max = data.sort(['score','std'],ascending=[0,1]).head(1)
-    param_max = str2int(rec_max['param'][0])
+    param_max = param_interpreter(rec_max['param'][0])
     ### prediction start ###
     ## classified training
-    clf = classifier(classifier,param_max,SEED=SEED).fit(train, label_train)
-    print(clf)
+    clf = classification(classifier,param_max,SEED=SEED)
+    clf.fit(train, label_train)
     # Check accuracy but this is based on the same data we used for training
     # Use classifier to train and test
-    print('Result with NaiveBeys =*=*=*=*=')
+    print('\nResult with NaiveBeys ===\n')
     train_acc,train_precision,train_recall,train_f1,train_auc = predict_process(train,label_train,clf)
     test_acc,test_precision,test_recall,test_f1,test_auc = predict_process(test,label_test,clf)
+
     columns = [
       'seed',
       'classifier',
@@ -143,7 +159,7 @@ def image_classification_process(train,test,label_train,label_test,SEED=2000,GRO
       'test_f1',
       'test_auc',
     ]
-    result = pd.DataFrame(pd.Series({
+    result = pd.DataFrame({
       'seed':GROUP,
       'classifier': classifier,
       'feature': feature,
@@ -159,6 +175,7 @@ def image_classification_process(train,test,label_train,label_test,SEED=2000,GRO
       'test_recall':test_recall,
       'test_f1':test_f1,
       'test_auc':test_auc,
-    }))
+    },columns=columns,index=[0])
+    print("=================")
     return result
   return 0
