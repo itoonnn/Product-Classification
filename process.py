@@ -7,6 +7,7 @@ from sklearn.svm import SVC
 from sklearn.neural_network import MLPClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn import cross_validation
+import time
 
 def GRID_FN(power):
   return 10**(power)
@@ -27,35 +28,48 @@ def getResult(predictions,labelData,probas_):
   return acc,precision,recall,fbeta,auc_score
 
 def predict_process(data,labelData,clf):
+  t = time.time()
   predictions = clf.predict(data)
+  predict_time = time.time() - t
+
   probas_ = clf.predict_proba(data)
   acc,precision,recall,fbeta,auc_score = getResult(predictions,labelData,probas_)
-  return acc,precision,recall,fbeta,auc_score
+  return acc,precision,recall,fbeta,auc_score,predict_time
 
 def str2float(i):
-  return tuple(float(j) for j in i[1:-1].split(','))
+  print(type(i))
+  if type(i)==str and len(i)>3:
+    return tuple(float(j) for j in i[1:-1].split(','))
+  else:
+    return float(i)
 def str2int(i):
-  return tuple(int(j) for j in i[1:-1].split(','))
+  if type(i)==str and len(i)>3:
+    return tuple(int(j) for j in i[1:-1].split(','))
+  else:
+    return int(i)
 def list_str2num(list):
   return [ str2float(i) if len(i)>3 else float(i) for i in list]
 
 def classification(name,param,SEED=2000):
   print(name)
   if(name == "NeuralNetwork"):
-    param = str2int(param)
+    if(type(param)!=tuple):
+      param = str2int(param)
     return MLPClassifier(hidden_layer_sizes=param,random_state=SEED)
   elif(name == "LogisticRegression"):
     return LogisticRegression(random_state=SEED,C=param,n_jobs=-1,multi_class='multinomial',solver='sag')
   elif(name == "Naivebayes"):
     return MultinomialNB(alpha=param)
   elif(name == "SVM-Linear"):
-    return SVC(C=param,kernel='linear',probability=True,random_state=SEED)
+    return SVC(C=param,kernel='linear',probability=True,random_state=SEED,cache_size=30000)
   elif(name == "SVM-RBF"):
-    param = str2float(param)
-    return SVC(C=param[1],gamma=param[0],kernel='rbf',probability=True,random_state=SEED)
+    if(type(param)!=tuple):
+      param = str2float(param)
+    return SVC(C=param[1],gamma=param[0],kernel='rbf',probability=True,random_state=SEED,cache_size=30000)
   elif(name == "SVM-Poly"):
-    param = str2float(param)
-    return SVC(C=param[1],degree=param[0],kernel='poly',probability=True,random_state=SEED)
+    if(type(param)!=tuple):
+      param = str2float(param)
+    return SVC(C=param[1],degree=param[0],kernel='poly',probability=True,random_state=SEED,cache_size=30000)
 
 def init_params(classifier):
   print(classifier)
@@ -110,11 +124,12 @@ def image_classification_process(train,test,label_train,label_test,SEED=2000,GRO
     print(parameter_exist)
 
     print("Run param")
-    parameter_run = list(set(parameter_all) - set(parameter_exist))
-    print(parameter_run)
+  parameter_run = list(set(parameter_all) - set(parameter_exist))
+  print(parameter_run)
   #tune parameter
   for param in parameter_run:
     #cross validation
+    print("PARAM ",param)
     clf = classification(classifier,param,SEED=SEED)
     scores = cross_validation.cross_val_score(clf,train,label_train,cv=10,scoring=roc_auc_my)
     score = round(scores.mean(),3)
@@ -135,12 +150,14 @@ def image_classification_process(train,test,label_train,label_test,SEED=2000,GRO
     ### prediction start ###
     ## classified training
     clf = classification(classifier,param_max,SEED=SEED)
+    t = time.time()
     clf.fit(train, label_train)
+    training_time = time.time()
     # Check accuracy but this is based on the same data we used for training
     # Use classifier to train and test
     print('\nResult with NaiveBeys ===\n')
-    train_acc,train_precision,train_recall,train_f1,train_auc = predict_process(train,label_train,clf)
-    test_acc,test_precision,test_recall,test_f1,test_auc = predict_process(test,label_test,clf)
+    train_acc,train_precision,train_recall,train_f1,train_auc,predict_train_time = predict_process(train,label_train,clf)
+    test_acc,test_precision,test_recall,test_f1,test_auc,predict_test_time = predict_process(test,label_test,clf)
 
     columns = [
       'seed',
@@ -158,6 +175,9 @@ def image_classification_process(train,test,label_train,label_test,SEED=2000,GRO
       'test_recall',
       'test_f1',
       'test_auc',
+      'predict_train_time',
+      'predict_test_time',
+      'training_time',
     ]
     result = pd.DataFrame({
       'seed':GROUP,
@@ -175,6 +195,9 @@ def image_classification_process(train,test,label_train,label_test,SEED=2000,GRO
       'test_recall':test_recall,
       'test_f1':test_f1,
       'test_auc':test_auc,
+      'predict_train_time':predict_train_time,
+      'predict_test_time':predict_test_time,
+      'training_time':training_time,
     },columns=columns,index=[0])
     print("=================")
     return result
