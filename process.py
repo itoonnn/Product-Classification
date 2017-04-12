@@ -37,7 +37,6 @@ def predict_process(data,labelData,clf):
   return acc,precision,recall,fbeta,auc_score,predict_time
 
 def str2float(i):
-  print(type(i))
   if type(i)==str and len(i)>3:
     return tuple(float(j) for j in i[1:-1].split(','))
   else:
@@ -141,12 +140,11 @@ def image_classification_process(train,test,label_train,label_test,SEED=2000,GRO
       df.to_csv(f, header=False)
       print("write\n",df)
   data = df.from_csv(filename)
-  parameter_exist = params_interpreter(data['param'])
-
+  parameter_exist = params_interpreter(data['param'],classifier=classifier)
   if list(set(parameter_all) - set(parameter_exist)) == []:
     print("\nComplete all parameter =*=*=*=\n")
     rec_max = data.sort(['score','std'],ascending=[0,1]).head(1)
-    param_max = param_interpreter(rec_max['param'][0])
+    param_max = param_interpreter(rec_max['param'][0],classifier=classifier)
     ### prediction start ###
     ## classified training
     clf = classification(classifier,param_max,SEED=SEED)
@@ -155,10 +153,9 @@ def image_classification_process(train,test,label_train,label_test,SEED=2000,GRO
     training_time = time.time()
     # Check accuracy but this is based on the same data we used for training
     # Use classifier to train and test
-    print('\nResult with NaiveBeys ===\n')
+    print('\nResult with '+classifier+' ===\n')
     train_acc,train_precision,train_recall,train_f1,train_auc,predict_train_time = predict_process(train,label_train,clf)
     test_acc,test_precision,test_recall,test_f1,test_auc,predict_test_time = predict_process(test,label_test,clf)
-
     columns = [
       'seed',
       'classifier',
@@ -184,7 +181,7 @@ def image_classification_process(train,test,label_train,label_test,SEED=2000,GRO
       'classifier': classifier,
       'feature': feature,
       'numk': numk,
-      'param':param_max,
+      'param':str(param_max),
       'train_acc':train_acc,
       'train_precision':train_precision,
       'train_recall':train_recall,
@@ -199,6 +196,6 @@ def image_classification_process(train,test,label_train,label_test,SEED=2000,GRO
       'predict_test_time':predict_test_time,
       'training_time':training_time,
     },columns=columns,index=[0])
-    print("=================")
+    print(result)
     return result
   return 0
