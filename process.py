@@ -117,6 +117,7 @@ def image_classification_process(train,test,label_train,label_test,SEED=2000,GRO
     print("create ",filename)
   else:
     data = df.from_csv(filename)
+    data = data.loc[data['seed'] == GROUP ]
     print("Exist param")
 
     parameter_exist = params_interpreter(data['param'],classifier=classifier)
@@ -140,6 +141,7 @@ def image_classification_process(train,test,label_train,label_test,SEED=2000,GRO
       df.to_csv(f, header=False)
       print("write\n",df)
   data = df.from_csv(filename)
+  data = data.loc[data['seed'] == GROUP ]
   parameter_exist = params_interpreter(data['param'],classifier=classifier)
   if list(set(parameter_all) - set(parameter_exist)) == []:
     print("\nComplete all parameter =*=*=*=\n")
