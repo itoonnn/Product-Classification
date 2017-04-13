@@ -43,6 +43,8 @@ def extract_w2v(doc,label,model_name="default"):
   for epoch in range(10):
     shuffle(documents)
     model.train(documents)
+    model.alpha -= 0.002  # decrease the learning rate
+    model.min_alpha = model.alpha  # fix the learning rate, no decay
   
   mname = model_name+".model"
   model.save(mname)
