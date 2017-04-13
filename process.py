@@ -159,6 +159,7 @@ def image_classification_process(train,test,label_train,label_test,SEED=2000,GRO
     train_acc,train_precision,train_recall,train_f1,train_auc,predict_train_time = predict_process(train,label_train,clf)
     test_acc,test_precision,test_recall,test_f1,test_auc,predict_test_time = predict_process(test,label_test,clf)
     columns = [
+      'store',
       'seed',
       'classifier',
       'feature',
@@ -179,6 +180,7 @@ def image_classification_process(train,test,label_train,label_test,SEED=2000,GRO
       'training_time',
     ]
     result = pd.DataFrame({
+      'store':store,
       'seed':GROUP,
       'classifier': classifier,
       'feature': feature,
