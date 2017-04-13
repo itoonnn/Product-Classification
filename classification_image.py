@@ -63,7 +63,7 @@ if(not os.path.isfile(fname)):
   print("create ",fname)
 else:
   exist = pd.DataFrame.from_csv(fname)
-  if(len(exist.loc[(exist['seed'] == GROUP) & (exist['classifier'] == CLASSIFIER) & (exist['feature'] == FUNCTION) & (exist['numk'] == num_k) ])==0):
+  if(len(exist.loc[(exist['store'] == STORE) & (exist['seed'] == GROUP) & (exist['classifier'] == CLASSIFIER) & (exist['feature'] == FUNCTION) & (exist['numk'] == num_k) ])==0):
     with open(fname, 'a') as f:
       result.to_csv(f, header=False)
       print("Saved")
