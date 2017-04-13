@@ -96,9 +96,10 @@ def param_interpreter(rec,classifier='default'):
   else:
     return rec
 
-def image_classification_process(train,test,label_train,label_test,SEED=2000,GROUP=0,classifier="Naivebayes",feature='sift',numk='sqrt(n)'):
+def image_classification_process(train,test,label_train,label_test,SEED=2000,GROUP=0,store="coldstorage",classifier="Naivebayes",feature='sift',numk='sqrt(n)'):
 # SEED = 2000
 # GROUP = 0-9
+# store = ["coldstorage","fairprice","giant","redmart"]
 # classifier = ['NeuralNetwork','LogiticRergression','Naivebayes','SVM-Linear','SVM-RBF','SVM-Poly']
 # feature = ['contextual','sift','surf','orb']
 # numk = ['contexual','sqrt(n)','sqrt(half(n))']
@@ -109,7 +110,7 @@ def image_classification_process(train,test,label_train,label_test,SEED=2000,GRO
   print("All param")
   print(parameter_all)
 
-  columns = ['seed','param','score','std']
+  columns = ['store','seed','param','score','std']
   df = pd.DataFrame(columns = columns)
   parameter_exist = []
   if(not os.path.isfile(filename)):
@@ -117,6 +118,7 @@ def image_classification_process(train,test,label_train,label_test,SEED=2000,GRO
     print("create ",filename)
   else:
     data = df.from_csv(filename)
+    data = data.loc[(data['seed']==GROUP)&(data['store']==store)]
     print("Exist param")
 
     parameter_exist = params_interpreter(data['param'],classifier=classifier)
@@ -134,12 +136,13 @@ def image_classification_process(train,test,label_train,label_test,SEED=2000,GRO
     score = round(scores.mean(),3)
     std = round(scores.std(),3)
     print(GROUP,param,score,std)
-    df = pd.DataFrame([{'seed':GROUP,'param':param,'score':score,'std':std}],columns = columns)
+    df = pd.DataFrame([{'file':file,'seed':GROUP,'param':param,'score':score,'std':std}],columns = columns)
     ### write file
     with open(filename, 'a') as f:
       df.to_csv(f, header=False)
       print("write\n",df)
   data = df.from_csv(filename)
+  data = data.loc[(data['seed']==GROUP)&(data['store']==store)]
   parameter_exist = params_interpreter(data['param'],classifier=classifier)
   if list(set(parameter_all) - set(parameter_exist)) == []:
     print("\nComplete all parameter =*=*=*=\n")
