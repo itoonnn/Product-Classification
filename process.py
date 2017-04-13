@@ -37,7 +37,6 @@ def predict_process(data,labelData,clf):
   return acc,precision,recall,fbeta,auc_score,predict_time
 
 def str2float(i):
-  print(type(i))
   if type(i)==str and len(i)>3:
     return tuple(float(j) for j in i[1:-1].split(','))
   else:
@@ -141,8 +140,7 @@ def image_classification_process(train,test,label_train,label_test,SEED=2000,GRO
       df.to_csv(f, header=False)
       print("write\n",df)
   data = df.from_csv(filename)
-  parameter_exist = params_interpreter(data['param'])
-
+  parameter_exist = params_interpreter(data['param'],classifier=classifier)
   if list(set(parameter_all) - set(parameter_exist)) == []:
     print("\nComplete all parameter =*=*=*=\n")
     rec_max = data.sort(['score','std'],ascending=[0,1]).head(1)
