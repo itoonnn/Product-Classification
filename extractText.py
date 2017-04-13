@@ -76,66 +76,61 @@ def extractTextFeature(data,label=[],opt="tfid",split=False,random_state = 2000,
       train,vectorizer = extract_tfid(train)
       test = vectorizer.transform(test)
     elif(opt=="w2v"):
-      # print(train)
-      # print(test)
-      print("\n")
       mname,train_token = extract_w2v(train,train.index,model_name=store+"_"+str(GROUP))
       vectorizer = Doc2Vec.load(mname)
-      print(train_token[0:5])
-      # print(vectorizer.docvecs['sent_0']) # FAIL 
+      train = [vectorizer.docvecs['sent_'+str(i)] for i in train.index]
+      # print(vectorizer.docvecs['sent_0']) # FAIL : train hasn't sent_0 
       # print(vectorizer.docvecs['sent_1']) # SUCCESS
-      print(np.shape(vectorizer.docvecs))
-
       documents = test
       sentences = [[word for word in document.split() if word not in STOPWORDS and len(word)>1] for document in documents]
       bigram_transformer = gensim.models.Phrases(sentences)
       test_token = [TaggedDocument(words = bigram_transformer[sentences[i]], tags =[i]) for i in range(len(sentences))]
       test = vectorizer.infer_vector(test_token[0][0])
-      print(test_token[0])
-      print(test)
+      test = [vectorizer.infer_vector(sentence[0]) for sentence in test_token]
 
     return train,test,label_train,label_test
 
-# # Specify input csv file
-print("file")
-print("coldstorage_path.csv == 1")
-print("giant_path.csv == 2")
-print("redmart_path.csv == 3")
-input_file = input()
-input_file = int(input_file)
-if input_file == 1:
-  input_file = "coldstorage_path.csv"
-elif input_file == 2:
-  input_file = "giant_path.csv"
-elif input_file == 3:
-  input_file = "redmart_path.csv"
-img_root = input_file.replace("_path.csv","")+"_img"
-print("SEED")
-SEED = 2000
-GROUP = int(input())
-print(input_file)
+# # # Specify input csv file
+# print("file")
+# print("coldstorage_path.csv == 1")
+# print("giant_path.csv == 2")
+# print("redmart_path.csv == 3")
+# input_file = input()
+# input_file = int(input_file)
+# if input_file == 1:
+#   input_file = "coldstorage_path.csv"
+# elif input_file == 2:
+#   input_file = "giant_path.csv"
+# elif input_file == 3:
+#   input_file = "redmart_path.csv"
+# img_root = input_file.replace("_path.csv","")+"_img"
+# print("SEED")
+# SEED = 2000
+# GROUP = int(input())
+# print(input_file)
 
 
-df = pd.read_csv(input_file, header = 0)
-# Subset dataframe to just columns category_path and name
-df = df.loc[:,['category_path','name']]
-# Make a duplicate of input df
-df_original=df
-df_dedup=df.drop_duplicates(subset='name')
-# print(len(np.unique(df_dedup['name'])))
-df=df_dedup
-#drop paths that have 1 member
-df_count = df.groupby(['category_path']).count()
-df_count = df_count[df_count == 1]
-df_count = df_count.dropna()
-df = df.loc[~df['category_path'].isin(list(df_count.index))]
-df = df.reset_index(drop=True)
-df['name'] = df['name'].str.replace("[^a-zA-Z]", " ")
-df['name'] = df['name'].str.lower()
+# df = pd.read_csv(input_file, header = 0)
+# # Subset dataframe to just columns category_path and name
+# df = df.loc[:,['category_path','name']]
+# # Make a duplicate of input df
+# df_original=df
+# df_dedup=df.drop_duplicates(subset='name')
+# # print(len(np.unique(df_dedup['name'])))
+# df=df_dedup
+# #drop paths that have 1 member
+# df_count = df.groupby(['category_path']).count()
+# df_count = df_count[df_count == 1]
+# df_count = df_count.dropna()
+# df = df.loc[~df['category_path'].isin(list(df_count.index))]
+# df = df.reset_index(drop=True)
+# df['name'] = df['name'].str.replace("[^a-zA-Z]", " ")
+# df['name'] = df['name'].str.lower()
 
-print("Uniqued df by name : "+str(len(df['name'])))
-x,token = extractTextFeature(df['name'],label=df['category_path'],opt='w2v',split=True,fname=input_file)
-
+# print("Uniqued df by name : "+str(len(df['name'])))
+# train,test,label_train,label_test = extractTextFeature(df['name'],label=df['category_path'],opt='tfid',split=True,fname=input_file)
+# print(train)
+# print(np.shape(train))
 # print(token[0][0])
 # model_name = x
 # x = Doc2Vec.load(model_name)
