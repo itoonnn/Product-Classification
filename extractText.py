@@ -9,12 +9,7 @@ from gensim.models import Doc2Vec
 from gensim import corpora
 import scipy
 from random import shuffle
-
 import os,sys
-
-def sentences_perm(sentences):
-        shuffle(sentences)
-        return sentences
 
 def extract_tfid(doc):
   # Remove numbers in product name
@@ -52,8 +47,8 @@ def extract_w2v(doc,label,model_name="default"):
   model.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
   return mname,documents
 
-def extractTextFeature(data,label=[],opt="tfid",split=False,random_state = 2000,save=False,GROUP = 0,fname = "coldstorage_path.csv"):
-  store = fname.replace("_path.csv","")
+def extractTextFeature(data,label=[],opt="tfid",split=False,random_state = 2000,save=False,GROUP = 0,store= "coldstorage"):
+
   x = data
   if(not split):
     if(opt=="tfid"):
@@ -87,6 +82,18 @@ def extractTextFeature(data,label=[],opt="tfid",split=False,random_state = 2000,
       test_token = [TaggedDocument(words = bigram_transformer[sentences[i]], tags =[i]) for i in range(len(sentences))]
       test = vectorizer.infer_vector(test_token[0][0])
       test = [vectorizer.infer_vector(sentence[0]) for sentence in test_token]
+    
+    train = train.toarray()
+    test = test.toarray()
+    label_train = np.array(label_train)
+    label_test = np.array(label_test)
+    # print(train)
+    print(train)
+    if(save):
+      np.savetxt("feature_"+store+"_"+opt+"_train_"+str(GROUP)+".csv",train,delimiter=',')
+      np.savetxt("feature_"+store+"_"+opt+"_test_"+str(GROUP)+".csv",test,delimiter=',')
+      np.savetxt("label_"+store+"_"+opt+"_train_"+str(GROUP)+".csv",label_train)
+      np.savetxt("label_"+store+"_"+opt+"_test_"+str(GROUP)+".csv",label_test)
 
     return train,test,label_train,label_test
 
