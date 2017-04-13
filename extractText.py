@@ -4,7 +4,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.feature_extraction.text import TfidfVectorizer
 import gensim.utils
 from gensim.parsing.preprocessing import STOPWORDS
-from gensim.models.doc2vec import LabeledSentence
+from gensim.models.doc2vec import LabeledSentence,TaggedDocument
 from gensim.models import Doc2Vec
 from gensim import corpora
 import scipy
@@ -27,25 +27,26 @@ def extract_w2v(doc,label,model_name="default"):
   documents = doc
   sentences = [[word for word in document.split() if word not in STOPWORDS and len(word)>1] for document in documents]
   bigram_transformer = gensim.models.Phrases(sentences)
-  documents = [LabeledSentence(words = bigram_transformer[sentences[i]], tags = 'sent_'+str(i)) for i in range(len(sentences))]
+  documents = [LabeledSentence(words = bigram_transformer[sentences[i]], tags =["sent_"+str(label[i])]) for i in range(len(label))]
   model = gensim.models.doc2vec.Doc2Vec(dm=0, # DBOW
           hs=1,
           size=10, 
           alpha=0.01, 
           min_alpha=0.0001,
-          window=15, 
+          window=5, 
           min_count=1)
   # build model
   model.build_vocab(documents)
 
   # train model
-  print(documents)
+  training_data = list(documents)
   for epoch in range(10):
-    shuffle(documents)
-    model.train(documents)
+    shuffle(training_data)
+    model.train(training_data)
     model.alpha -= 0.002  # decrease the learning rate
     model.min_alpha = model.alpha  # fix the learning rate, no decay
-  
+    print("EPOCH : ",epoch)
+
   mname = model_name+".model"
   model.save(mname)
   model.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
@@ -58,8 +59,8 @@ def extractTextFeature(data,label=[],opt="tfid",split=False,random_state = 2000,
     if(opt=="tfid"):
       x,vectorizer = extract_tfid(x)
     elif(opt=="w2v"):
-      x,token = extract_w2v(x,label,model_name=fname+"_"+GROUP)
-    return x,token
+      x,token = extract_w2v(x,label,model_name=store+"_"+str(GROUP))
+      # return x,token
   else:
     y = label
     #### split train test
@@ -75,8 +76,24 @@ def extractTextFeature(data,label=[],opt="tfid",split=False,random_state = 2000,
       train,vectorizer = extract_tfid(train)
       test = vectorizer.transform(test)
     elif(opt=="w2v"):
-      train,vectorizer = extract_tfid(train)
-      test = vectorizer.transform(test)
+      # print(train)
+      # print(test)
+      print("\n")
+      mname,train_token = extract_w2v(train,train.index,model_name=store+"_"+str(GROUP))
+      vectorizer = Doc2Vec.load(mname)
+      print(train_token[0:5])
+      # print(vectorizer.docvecs['sent_0']) # FAIL 
+      # print(vectorizer.docvecs['sent_1']) # SUCCESS
+      print(np.shape(vectorizer.docvecs))
+
+      documents = test
+      sentences = [[word for word in document.split() if word not in STOPWORDS and len(word)>1] for document in documents]
+      bigram_transformer = gensim.models.Phrases(sentences)
+      test_token = [TaggedDocument(words = bigram_transformer[sentences[i]], tags =[i]) for i in range(len(sentences))]
+      test = vectorizer.infer_vector(test_token[0][0])
+      print(test_token[0])
+      print(test)
+
     return train,test,label_train,label_test
 
 # # Specify input csv file
@@ -117,16 +134,16 @@ df['name'] = df['name'].str.replace("[^a-zA-Z]", " ")
 df['name'] = df['name'].str.lower()
 
 print("Uniqued df by name : "+str(len(df['name'])))
-x,token = extractTextFeature(df['name'],label=df['category_path'],opt='w2v',fname=input_file)
+x,token = extractTextFeature(df['name'],label=df['category_path'],opt='w2v',split=True,fname=input_file)
 
-print(token[0][0])
-model_name = x
-x = Doc2Vec.load(model_name)
-v2=x.infer_vector(token[0][0])
-x = Doc2Vec.load(model_name)
-v3=x.infer_vector(token[0][0])
-print(v2)
-print(v3)
+# print(token[0][0])
+# model_name = x
+# x = Doc2Vec.load(model_name)
+# v2=x.infer_vector(token[0][0])
+# x = Doc2Vec.load(model_name)
+# v3=x.infer_vector(token[0][0])
+# print(x.docvecs[0])
+# print(x.docvecs[token[0][1]])
 # print(x.docvecs['sent_0'])
 # for key in x.docvecs:
 #   print(key)
