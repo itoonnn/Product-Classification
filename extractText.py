@@ -23,7 +23,7 @@ def extract_tfid(doc):
   x = vectorizer.fit_transform(doc)
   return x,vectorizer
 
-def extract_w2v(doc,label):
+def extract_w2v(doc,label,model_name="default"):
   documents = doc
   sentences = [[word for word in document.split() if word not in STOPWORDS and len(word)>1] for document in documents]
   bigram_transformer = gensim.models.Phrases(sentences)
@@ -41,19 +41,22 @@ def extract_w2v(doc,label):
   # train model
   print(documents)
   for epoch in range(10):
-    model.train(shuffle(documents))
+    shuffle(documents)
+    model.train(documents)
   
-  model.save("test.model")
+  mname = model_name+".model"
+  model.save(mname)
   model.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
-  return model,documents
+  return mname,documents
 
-def extractTextFeature(data,label=[],opt="tfid",split=False,random_state = 2000,save=False,GROUP = 0):
+def extractTextFeature(data,label=[],opt="tfid",split=False,random_state = 2000,save=False,GROUP = 0,fname = "coldstorage_path.csv"):
+  store = fname.replace("_path.csv","")
   x = data
   if(not split):
     if(opt=="tfid"):
       x,vectorizer = extract_tfid(x)
     elif(opt=="w2v"):
-      x,token = extract_w2v(x,label)
+      x,token = extract_w2v(x,label,model_name=fname+"_"+GROUP)
     return x,token
   else:
     y = label
@@ -112,15 +115,14 @@ df['name'] = df['name'].str.replace("[^a-zA-Z]", " ")
 df['name'] = df['name'].str.lower()
 
 print("Uniqued df by name : "+str(len(df['name'])))
-x,token = extractTextFeature(df['name'],label=df['category_path'],opt='w2v')
+x,token = extractTextFeature(df['name'],label=df['category_path'],opt='w2v',fname=input_file)
 
 print(token[0][0])
-v1=x.infer_vector(token[0][0])
-x = Doc2Vec.load('test.model')
+model_name = x
+x = Doc2Vec.load(model_name)
 v2=x.infer_vector(token[0][0])
-x = Doc2Vec.load('test.model')
+x = Doc2Vec.load(model_name)
 v3=x.infer_vector(token[0][0])
-print(v1)
 print(v2)
 print(v3)
 # print(x.docvecs['sent_0'])
