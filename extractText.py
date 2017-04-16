@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from sklearn.feature_extraction.text import TfidfVectorizer
-from gensim.utils import lemmatize
 from gensim.parsing.preprocessing import STOPWORDS
 from gensim.models.doc2vec import LabeledSentence,TaggedDocument
 from gensim.models import Doc2Vec,Phrases
@@ -12,47 +11,46 @@ import scipy
 from random import shuffle
 import os,sys,time
 
-def bigram_model(documents):
+# def bigram_model(documents):
 
-  sentences = [[word for word in document.split() if word not in STOPWORDS and len(word)>1] for document in documents]
-  bigram_transformer = Phrases(sentences)
-  list_word = [bigram_transformer[sentence] for sentence in sentences]
-  dictionary = corpora.Dictionary(list_word)
-  corpus = [dictionary.doc2bow(sent) for sent in list_word]
-  return corpus
+#   sentences = [[word for word in document.split() if word not in STOPWORDS and len(word)>1] for document in documents]
+#   bigram_transformer = Phrases(sentences)
+#   list_word = [bigram_transformer[sentence] for sentence in sentences]
+#   dictionary = corpora.Dictionary(list_word)
+#   corpus = [dictionary.doc2bow(sent) for sent in list_word]
+#   return corpus
 def extract_tfid(doc):
   # Remove numbers in product name
   doc = doc.str.replace("[^a-zA-Z]", " ")
   doc = doc.str.lower()
   doc = doc.values.astype('U')
-  # doc = doc.str.strip(" ")
-
-  # vectorizer = TfidfVectorizer(ngram_range=(1,2),stop_words={'english'},min_df=0.001,max_df=1.0)
-  # print(doc)
-  # x = vectorizer.fit_transform(doc)
-
-  corpus = bigram_model(doc)
-  tfidf = TfidfModel(corpus)
-  print("\n")
-  print(tfidf)
-  x = [tfidf[corp] for corp in corpus]
-
-  return x,tfidf
+  vectorizer = TfidfVectorizer(ngram_range=(1,2),stop_words={'english'},min_df=0.001,max_df=1.0)
+  x = vectorizer.fit_transform(doc)
+  return x,vectorizer
 
 def extract_w2v(doc,label,model_name="default",epochs=20):
-  documents = doc
-  sentences = [[word for word in document.split() if word not in STOPWORDS and len(word)>1] for document in documents]
-  bigram_transformer = Phrases(sentences)
-  documents = [LabeledSentence(words = bigram_transformer[sentences[i]], tags =["sent_"+str(label[i])]) for i in range(len(label))]
-  nmax = 0
-  nmin = 999999
-  for sent in sentences:
-    lsent = len(bigram_transformer[sent])
-    nmax = max(nmax,lsent)
-    nmin = min(nmin,lsent)
-  print("MAX : ",nmax)
-  print("MIN : ",nmin)
-  model = gensim.models.doc2vec.Doc2Vec(dm=0, # DBOW refer to paper
+  doc = doc.str.replace("[^a-zA-Z]", " ")
+  doc = doc.str.lower()
+  doc = doc.values.astype('U')
+  # documents = doc
+  # sentences = [[word for word in document.split() if word not in STOPWORDS and len(word)>1] for document in documents]
+  # bigram_transformer = Phrases(sentences)
+  # documents = [LabeledSentence(words = bigram_transformer[sentences[i]], tags =["sent_"+str(label[i])]) for i in range(len(label))]
+  # nmax = 0
+  # nmin = 999999
+  # for sent in sentences:
+  #   lsent = len(bigram_transformer[sent])
+  #   nmax = max(nmax,lsent)
+  #   nmin = min(nmin,lsent)
+  # print("MAX : ",nmax)
+  # print("MIN : ",nmin)
+  vectorizer = TfidfVectorizer(ngram_range=(1,2),stop_words={'english'},min_df=0.001,max_df=1.0)
+  doc_vector = vectorizer.fit_transform(doc)
+  documents = vectorizer.inverse_transform(doc_vector)
+  documents = [sent.tolist() for sent in documents]
+  documents = [LabeledSentence(words = documents[i], tags =["sent_"+str(label[i])]) for i in range(len(label))]
+  print(documents[:10])
+  model = Doc2Vec(dm=0, # DBOW refer to paper
           hs=1,  # soft max refer to paper
           size=10, # 100-300 is common
           sample=1e-5, # useful 
@@ -107,11 +105,19 @@ def extractTextFeature(data,label=[],opt="tfid",split=False,random_state = 2000,
     label_test = y[INDEX[GROUP]['test']]
     if(opt=="tfid"):
       train,vectorizer = extract_tfid(train)
-      # test = vectorizer.transform(test.values.astype('U'))
-      test = bigram_model(test)
-      test = vectorizer[test]
+      test = vectorizer.transform(test.values.astype('U'))
+      train = train.toarray()
+      test = test.toarray()
+      label_train = np.array(label_train)
+      label_test = np.array(label_test)
+
+      # test = bigram_model(test)
+      # test = vectorizer[test]
+      
+      print(type(vectorizer.inverse_transform(train)[0]))
       print(np.shape(train))
       print(np.shape(test))
+      
     elif(opt=="w2v"):
       mname,train_token = extract_w2v(train,train.index,model_name=store+"_"+str(GROUP))
       for i in train.index:
@@ -127,17 +133,15 @@ def extractTextFeature(data,label=[],opt="tfid",split=False,random_state = 2000,
         vectorizer = Doc2Vec.load(mname)
         test = vectorizer.infer_vector(sentence[0])
     
-    # train = train.toarray()
-    # test = test.toarray()
-    # label_train = np.array(label_train)
-    # label_test = np.array(label_test)
+      
+
     # print(train)
-    print(train)
-    if(save):
-      np.savetxt("feature_"+store+"_"+opt+"_train_"+str(GROUP)+".csv",train,delimiter=',')
-      np.savetxt("feature_"+store+"_"+opt+"_test_"+str(GROUP)+".csv",test,delimiter=',')
-      np.savetxt("label_"+store+"_"+opt+"_train_"+str(GROUP)+".csv",label_train)
-      np.savetxt("label_"+store+"_"+opt+"_test_"+str(GROUP)+".csv",label_test)
+    # print(train[:10])
+    # if(save):
+    #   np.savetxt("feature_"+store+"_"+opt+"_train_"+str(GROUP)+".csv",train,delimiter=',')
+    #   np.savetxt("feature_"+store+"_"+opt+"_test_"+str(GROUP)+".csv",test,delimiter=',')
+    #   np.savetxt("label_"+store+"_"+opt+"_train_"+str(GROUP)+".csv",label_train)
+    #   np.savetxt("label_"+store+"_"+opt+"_test_"+str(GROUP)+".csv",label_test)
 
     return train,test,label_train,label_test
 

@@ -28,4 +28,4 @@ for store in ['coldstorage','fairprice','giant','redmart']:
 
   # for i in range(0,10):
   #   train,test,label_train,label_test = extractTextFeature(df['name'],label=y,opt="w2v",store=store,split=True,random_state=2000,save=True,GROUP=i)
-  train,test,label_train,label_test = extractTextFeature(df['name'],label=y,opt="tfid",store=store,split=True,random_state=2000,save=True,GROUP=0)
+  train,test,label_train,label_test = extractTextFeature(df['name'],label=y,opt="w2v",store=store,split=True,random_state=2000,save=True,GROUP=0)
