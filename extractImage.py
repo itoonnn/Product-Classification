@@ -176,8 +176,9 @@ def extractImageFeature(data,img_root,label=[],opt='contextual',random_state = 2
       train_cluster = np.vstack(train)
       test_cluster = np.vstack(test)
       print("START Clustering")
-      # n_clusters = 1000
+      # n_clusters = 1000 ###########################################################################
       n_clusters = math.floor(math.sqrt(len(train_cluster)))
+      # n_clusters = math.floor(math.sqrt(len(train_cluster)/2)) ###############################################
       print("Total keypoint : ",len(train_cluster))
       print("Number of cluster : ",n_clusters)
       cluster = MiniBatchKMeans(n_clusters=n_clusters,random_state = random_state).fit(train_cluster)
