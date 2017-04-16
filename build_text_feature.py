@@ -1,7 +1,7 @@
 from extractText import *
 from sklearn.preprocessing import LabelEncoder
 
-for store in ['fairprice','giant','redmart']:
+for store in ['coldstorage','fairprice','giant','redmart']:
   input_file = store+"_path.csv"
   df = pd.read_csv(input_file, header = 0)
   ### Preprocessing  start ###
@@ -26,5 +26,6 @@ for store in ['fairprice','giant','redmart']:
   y = y.astype(str) 
   y = number.fit_transform(y)
 
-  for i in range(0,10):
-    train,test,label_train,label_test = extractTextFeature(df['name'],label=y,opt="tfid",store=store,split=True,random_state=2000,save=True,GROUP=i)
+  # for i in range(0,10):
+  #   train,test,label_train,label_test = extractTextFeature(df['name'],label=y,opt="w2v",store=store,split=True,random_state=2000,save=True,GROUP=i)
+  train,test,label_train,label_test = extractTextFeature(df['name'],label=y,opt="tfid",store=store,split=True,random_state=2000,save=True,GROUP=0)

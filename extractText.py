@@ -2,48 +2,83 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from sklearn.feature_extraction.text import TfidfVectorizer
-import gensim.utils
+from gensim.utils import lemmatize
 from gensim.parsing.preprocessing import STOPWORDS
 from gensim.models.doc2vec import LabeledSentence,TaggedDocument
-from gensim.models import Doc2Vec
+from gensim.models import Doc2Vec,Phrases
+from gensim.models.tfidfmodel import TfidfModel
 from gensim import corpora
 import scipy
 from random import shuffle
-import os,sys
+import os,sys,time
 
+def bigram_model(documents):
+
+  sentences = [[word for word in document.split() if word not in STOPWORDS and len(word)>1] for document in documents]
+  bigram_transformer = Phrases(sentences)
+  list_word = [bigram_transformer[sentence] for sentence in sentences]
+  dictionary = corpora.Dictionary(list_word)
+  corpus = [dictionary.doc2bow(sent) for sent in list_word]
+  return corpus
 def extract_tfid(doc):
   # Remove numbers in product name
   doc = doc.str.replace("[^a-zA-Z]", " ")
-  vectorizer = TfidfVectorizer(ngram_range=(1,2),stop_words={'english'},min_df=0.001,max_df=1.0)
-  for i in doc:
-    if(i==None):
-      print(i)
-  x = vectorizer.fit_transform(doc)
-  return x,vectorizer
+  doc = doc.str.lower()
+  doc = doc.values.astype('U')
+  # doc = doc.str.strip(" ")
 
-def extract_w2v(doc,label,model_name="default"):
+  # vectorizer = TfidfVectorizer(ngram_range=(1,2),stop_words={'english'},min_df=0.001,max_df=1.0)
+  # print(doc)
+  # x = vectorizer.fit_transform(doc)
+
+  corpus = bigram_model(doc)
+  tfidf = TfidfModel(corpus)
+  print("\n")
+  print(tfidf)
+  x = [tfidf[corp] for corp in corpus]
+
+  return x,tfidf
+
+def extract_w2v(doc,label,model_name="default",epochs=20):
   documents = doc
   sentences = [[word for word in document.split() if word not in STOPWORDS and len(word)>1] for document in documents]
-  bigram_transformer = gensim.models.Phrases(sentences)
+  bigram_transformer = Phrases(sentences)
   documents = [LabeledSentence(words = bigram_transformer[sentences[i]], tags =["sent_"+str(label[i])]) for i in range(len(label))]
-  model = gensim.models.doc2vec.Doc2Vec(dm=0, # DBOW
-          hs=1,
-          size=300, 
-          alpha=0.01, 
-          min_alpha=0.0001,
-          window=5, 
+  nmax = 0
+  nmin = 999999
+  for sent in sentences:
+    lsent = len(bigram_transformer[sent])
+    nmax = max(nmax,lsent)
+    nmin = min(nmin,lsent)
+  print("MAX : ",nmax)
+  print("MIN : ",nmin)
+  model = gensim.models.doc2vec.Doc2Vec(dm=0, # DBOW refer to paper
+          hs=1,  # soft max refer to paper
+          size=10, # 100-300 is common
+          sample=1e-5, # useful 
+          alpha=0.01, # refer to paper
+          min_alpha=1e-4, # refer to paper
+          negative=5, #5-20 
+          seed=2000,
+          window=5, # good in 5-12 / if doc has < window-1 refer to NULL
           min_count=1)
   # build model
   model.build_vocab(documents)
 
   # train model
   training_data = list(documents)
-  for epoch in range(20):
+  t = time.time()
+  # model.train(training_data)
+  # print(time.time()-t)
+  ## fix alpha
+  alpha_decrease = (model.alpha-model.min_alpha)/epochs
+  for epoch in range(epochs):
+    print("EPOCH : ",epoch,model.alpha,model.min_alpha)
     shuffle(training_data)
     model.train(training_data)
-    model.alpha -= 0.002  # decrease the learning rate
+    model.alpha -= alpha_decrease  # decrease the learning rate
     model.min_alpha = model.alpha  # fix the learning rate, no decay
-    print("EPOCH : ",epoch)
+  print(time.time()-t)
 
   mname = model_name+".model"
   model.save(mname)
@@ -72,7 +107,11 @@ def extractTextFeature(data,label=[],opt="tfid",split=False,random_state = 2000,
     label_test = y[INDEX[GROUP]['test']]
     if(opt=="tfid"):
       train,vectorizer = extract_tfid(train)
-      test = vectorizer.transform(test)
+      # test = vectorizer.transform(test.values.astype('U'))
+      test = bigram_model(test)
+      test = vectorizer[test]
+      print(np.shape(train))
+      print(np.shape(test))
     elif(opt=="w2v"):
       mname,train_token = extract_w2v(train,train.index,model_name=store+"_"+str(GROUP))
       for i in train.index:
@@ -82,16 +121,16 @@ def extractTextFeature(data,label=[],opt="tfid",split=False,random_state = 2000,
       # print(vectorizer.docvecs['sent_1']) # SUCCESS
       documents = test
       sentences = [[word for word in document.split() if word not in STOPWORDS and len(word)>1] for document in documents]
-      bigram_transformer = gensim.models.Phrases(sentences)
+      bigram_transformer = Phrases(sentences)
       test_token = [TaggedDocument(words = bigram_transformer[sentences[i]], tags =[i]) for i in range(len(sentences))]
       for sentence in test_token:
         vectorizer = Doc2Vec.load(mname)
         test = vectorizer.infer_vector(sentence[0])
     
-    train = train.toarray()
-    test = test.toarray()
-    label_train = np.array(label_train)
-    label_test = np.array(label_test)
+    # train = train.toarray()
+    # test = test.toarray()
+    # label_train = np.array(label_train)
+    # label_test = np.array(label_test)
     # print(train)
     print(train)
     if(save):
