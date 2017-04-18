@@ -52,13 +52,13 @@ def extract_w2v(doc,label,model_name="default",epochs=20):
   print(documents[:10])
   model = Doc2Vec(dm=0, # DBOW refer to paper
           hs=1,  # soft max refer to paper
-          size=10, # 100-300 is common
+          size=10, # [100,200,300,400]
           sample=1e-5, # useful 
           alpha=0.01, # refer to paper
           min_alpha=1e-4, # refer to paper
-          negative=5, #5-20 
+          negative=5, #5-20 [0,n/2,n]
           seed=2000,
-          window=5, # good in 5-12 / if doc has < window-1 refer to NULL
+          window=5, # [n/2,n]
           min_count=1)
   # build model
   model.build_vocab(documents)
