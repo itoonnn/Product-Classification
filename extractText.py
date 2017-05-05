@@ -4,17 +4,15 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.feature_extraction.text import TfidfVectorizer
 import gensim.utils
 from gensim.parsing.preprocessing import STOPWORDS
-from gensim.models.doc2vec import LabeledSentence
+from gensim.models.doc2vec import LabeledSentence,TaggedDocument
 from gensim.models import Doc2Vec
 from gensim import corpora
 import scipy
-from random import shuffle
-
+import random
+import time
 import os,sys
 
-def sentences_perm(sentences):
-        shuffle(sentences)
-        return sentences
+
 
 def extract_tfid(doc):
   # Remove numbers in product name
@@ -25,24 +23,30 @@ def extract_tfid(doc):
 
 def extract_w2v(doc,label):
   documents = doc
+  model = gensim.models.doc2vec.Doc2Vec(
+        dm=0, # DBOW
+        hs=1,
+        size=10, 
+        alpha=0.01, 
+        min_alpha=0.0001,
+        window=15, 
+        min_count=1,
+        workers=8)
   sentences = [[word for word in document.split() if word not in STOPWORDS and len(word)>1] for document in documents]
+  
+  #####################################################
   bigram_transformer = gensim.models.Phrases(sentences)
-  documents = [LabeledSentence(words = bigram_transformer[sentences[i]], tags = 'sent_'+str(i)) for i in range(len(sentences))]
-  model = gensim.models.doc2vec.Doc2Vec(dm=0, # DBOW
-          hs=1,
-          size=10, 
-          alpha=0.01, 
-          min_alpha=0.0001,
-          window=15, 
-          min_count=1)
+  documents = [TaggedDocument(words = bigram_transformer[sentences[i]] if len(bigram_transformer[sentences[i]])>0 else [], tags = [i]) for i in range(len(sentences))]
   # build model
   model.build_vocab(documents)
 
   # train model
-  print(documents)
   for epoch in range(10):
-    model.train(shuffle(documents))
+    random.shuffle(documents)
+    model.train(documents)
+    print("epoch : ",epoch)
   
+
   model.save("test.model")
   model.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
   return model,documents
