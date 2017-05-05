@@ -177,8 +177,8 @@ def extractImageFeature(data,img_root,label=[],opt='contextual',random_state = 2
       test_cluster = np.vstack(test)
       print("START Clustering")
       # n_clusters = 1000 ###########################################################################
-      n_clusters = math.floor(math.sqrt(len(train_cluster)))
-      # n_clusters = math.floor(math.sqrt(len(train_cluster)/2)) ###############################################
+      # n_clusters = math.floor(math.sqrt(len(train_cluster)))
+      n_clusters = math.floor(math.sqrt(len(train_cluster)/2)) ###############################################
       print("Total keypoint : ",len(train_cluster))
       print("Number of cluster : ",n_clusters)
       cluster = MiniBatchKMeans(n_clusters=n_clusters,random_state = random_state).fit(train_cluster)
@@ -189,10 +189,10 @@ def extractImageFeature(data,img_root,label=[],opt='contextual',random_state = 2
       train = build_histrogram(train,centroids,train_cluster_labels,n_clusters)
       test = build_histrogram(test,centroids,test_cluster_labels,n_clusters)
       if(save):
-        np.savetxt("feature_"+store+"_"+opt+"_train_"+str(GROUP)+".csv",train,delimiter=',')
-        np.savetxt("feature_"+store+"_"+opt+"_test_"+str(GROUP)+".csv",test,delimiter=',')
-        np.savetxt("label_"+store+"_"+opt+"_train_"+str(GROUP)+".csv",label_train)
-        np.savetxt("label_"+store+"_"+opt+"_test_"+str(GROUP)+".csv",label_test)
+        np.savetxt("image_feature/sqrt(half(n))/feature_"+store+"_"+opt+"_train_"+str(GROUP)+".csv",train,delimiter=',')
+        np.savetxt("image_feature/sqrt(half(n))/feature_"+store+"_"+opt+"_test_"+str(GROUP)+".csv",test,delimiter=',')
+        np.savetxt("image_feature/sqrt(half(n))/label_"+store+"_"+opt+"_train_"+str(GROUP)+".csv",label_train)
+        np.savetxt("image_feature/sqrt(half(n))/label_"+store+"_"+opt+"_test_"+str(GROUP)+".csv",label_test)
       
     return train,test,label_train,label_test
 
