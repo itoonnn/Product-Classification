@@ -2,7 +2,36 @@ import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.model_selection import cross_val_score
+from collections import Counter
+import operator
 
+def reduce_class(x,y,threshold = 0.01):
+  label_size = len(y)
+  print(label_size)
+  flabel = Counter(y)
+  flabel = sorted(flabel.items(), key=operator.itemgetter(1),reverse=True)
+  SUM = 0
+  count = 0
+  removed_class = []
+  for label in flabel:
+    freq = label[1]/label_size
+    if(freq < threshold):
+      count += 1
+      SUM += label[1]
+      removed_class.append(label[0])
+      print(label,freq)
+  print(len(flabel)-count)
+  print(SUM)
+  print(SUM/label_size)
+  print(removed_class)
+  for i in range(label_size):
+    if y[i] in removed_class:
+      y[i] = None
+      x[i] = None
+  x = x[~np.isnan(x).all(1)]
+  y = y[~np.isnan(y)]
+  # print(np.shape
+  return x,y
 def feature_selection(train,test):
   score_before = 0
   rc_before = 0
