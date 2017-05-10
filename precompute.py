@@ -5,7 +5,7 @@ from sklearn.model_selection import cross_val_score
 from collections import Counter
 import operator
 
-def reduce_class(x,y,threshold = 0.01):
+def reduce_class(x,y,threshold = 0.01,other=False):
   print("Reduce Class")
   y_size = len(y)
   freq_y = Counter(y)
@@ -13,6 +13,7 @@ def reduce_class(x,y,threshold = 0.01):
   SUM = 0
   count = 0
   removed_class = []
+  ## fy[0] = class, fy[1] = freq
   for fy in freq_y:
     freq = fy[1]/y_size
     if(freq < threshold):
@@ -20,14 +21,18 @@ def reduce_class(x,y,threshold = 0.01):
       SUM += fy[1]
       removed_class.append(fy[0])
       # print(fy,freq)
+
   print("exist class : ",len(freq_y)-count)
   print("remove amount : ",SUM)
   print("remove rate : ",SUM/y_size)
   print("removed class\n",removed_class)
   for i in range(y_size):
     if y[i] in removed_class:
-      y[i] = None
-      x[i] = None
+      if(other):     ############ 
+        y[i] = 9999
+      else:
+        y[i] = None
+        x[i] = None
   x = x[~np.isnan(x).all(1)]
   y = y[~np.isnan(y)]
   return x,y
