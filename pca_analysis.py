@@ -14,7 +14,7 @@ STORE = ["coldstorage","fairprice","giant","redmart"]
 FUNCTION = ["contextual","sift","surf","orb"]
 num_k = ["contextual","sqrt(n)","sqrt(half(n))"]
 CLASSIFIER = ['Naivebayes','LogisticRegression','NeuralNetwork','SVM-Linear','SVM-RBF','SVM-Poly']
-PATH = "image_feature/"
+PATH = "D://image_feature/"
 
 # Specify input csv file
 print("STORE")
@@ -47,7 +47,7 @@ print("GROUP")
 GROUP = int(input())
 
 # for STORE in ['giant','redmart']:
-for GROUP in range(0,1): 
+for GROUP in range(0,10): 
   file_train = PATH+"/"+"_".join(["feature",STORE,FUNCTION,"train",str(GROUP)])+".csv"
   file_test = PATH+"/"+"_".join(["feature",STORE,FUNCTION,"test",str(GROUP)])+".csv"
   file_train_label = PATH+"/"+"_".join(["label",STORE,FUNCTION,"train",str(GROUP)])+".csv"
@@ -60,39 +60,67 @@ for GROUP in range(0,1):
   print("Shape of Data")
   print(np.shape(train))
   # print("Classification Test Before")
-  # clf = SVC(C=10,probability=True,random_state=SEED,kernel='linear').fit(train, label_train)
+  # clf = SVC(C=1,probability=True,random_state=SEED,kernel='linear').fit(train, label_train)
   # pred = clf.predict(train)
   # probas_ = clf.predict_proba(train)
   # acc,precision,recall,fbeta,auc_score = getResult(pred,label_train,probas_)
   # print("TRAIN RESULT")
   # print("accuracy :",acc)
   # print("AUROC :",auc_score)
+  # acc_train_before,auc_train_before = acc,auc_score
+
   # pred = clf.predict(test)
   # probas_ = clf.predict_proba(test)
   # acc,precision,recall,fbeta,auc_score = getResult(pred,label_test,probas_)
   # print("TEST RESULT")
   # print("accuracy :",acc)
   # print("AUROC :",auc_score)
+  # acc_test_before,auc_test_before = acc,auc_score
+
   ############### pre-processed data ###################
 
-  train,label_train = reduce_class(train,label_train)
-  # train,test = feature_selection(train,test)
-
+  train,label_train = reduce_class(train,label_train,threshold=0.001)
+  train,test = feature_selection(train,test,threshold=0.1)
+  # feature_selection(train,test)
   ######################################################
   print("Pre-processed Data")
   print(np.shape(train))
-  # print("Classification Test After")
-  # clf = SVC(C=10,probability=True,random_state=SEED,kernel='linear').fit(train, label_train)
-  # pred = clf.predict(train)
-  # probas_ = clf.predict_proba(train)
-  # acc,precision,recall,fbeta,auc_score = getResult(pred,label_train,probas_)
-  # print("TRAIN RESULT")
-  # print("accuracy :",acc)
-  # print("AUROC :",auc_score)
-  # pred = clf.predict(test)
-  # probas_ = clf.predict_proba(test)
-  # acc,precision,recall,fbeta,auc_score = getResult(pred,label_test,probas_)
-  # print("TEST RESULT")
-  # print("accuracy :",acc)
-  # print("AUROC :",auc_score)
-  
+  print("Classification Test After")
+  clf = SVC(C=1,probability=True,random_state=SEED,kernel='linear').fit(train, label_train)
+  pred = clf.predict(train)
+  probas_ = clf.predict_proba(train)
+  acc,precision,recall,fbeta,auc_score = getResult(pred,label_train,probas_)
+  print("TRAIN RESULT")
+  print("accuracy :",acc)
+  print("AUROC :",auc_score)
+  acc_train_after,auc_train_after = acc,auc_score
+
+  pred = clf.predict(test)
+  probas_ = clf.predict_proba(test)
+  acc,precision,recall,fbeta,auc_score = getResult(pred,label_test,probas_)
+  print("TEST RESULT")
+  print("accuracy :",acc)
+  print("AUROC :",auc_score)
+  acc_test_after,auc_test_after = acc,auc_score
+  columns = [
+    'seed',
+    'acc_train_after',
+    'auc_train_after',
+    'acc_test_after',
+    'auc_test_after'
+  ]
+  result = pd.DataFrame(pd.Series({
+    'seed':GROUP,
+    'acc_train_after':acc_train_after,
+    'auc_train_after':auc_train_after,
+    'acc_test_after':acc_test_after,
+    'auc_test_after':auc_test_after
+  }))
+  fname = "RESULT_PCA_0-1_class_0-001.csv"
+  if(not os.path.isfile(fname)):
+    result.to_csv(fname)
+    print("create ",fname)
+  else:
+    exist = pd.DataFrame.from_csv(fname)
+    with open(fname, 'a') as f:
+      result.to_csv(f, header=False)
