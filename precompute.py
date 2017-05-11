@@ -5,7 +5,7 @@ from sklearn.model_selection import cross_val_score
 from collections import Counter
 import operator
 
-def reduce_class(x,y,threshold = 0.01,other=False):
+def reduce_class(x,y,y_test=[],threshold = 0.01,other=False):
   print("Reduce Class")
   y_size = len(y)
   freq_y = Counter(y)
@@ -28,14 +28,21 @@ def reduce_class(x,y,threshold = 0.01,other=False):
   print("removed class\n",removed_class)
   for i in range(y_size):
     if y[i] in removed_class:
-      if(other):     ############ 
-        y[i] = 9999
+      if(other):     ############ other
+        y[i] = 9999.0
       else:
         y[i] = None
         x[i] = None
+  if(other):         ############ other
+    for i in range(len(y_test)):
+      if y_test[i] in removed_class:
+        y_test[i] = 9999.0
   x = x[~np.isnan(x).all(1)]
   y = y[~np.isnan(y)]
-  return x,y
+  if(other):
+    return x,y,y_test
+  else:
+    return x,y
 
 def feature_selection(train,test,threshold = 0.9):
   print("PCA")

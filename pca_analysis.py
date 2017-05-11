@@ -79,7 +79,8 @@ for GROUP in range(0,10):
 
   ############### pre-processed data ###################
 
-  train,label_train = reduce_class(train,label_train,threshold=0.001)
+  # train,label_train = reduce_class(train,label_train,threshold=0.001)
+  train,label_train,label_test = reduce_class(train,label_train,threshold=0.01,other=True,y_test=label_test)
   train,test = feature_selection(train,test,threshold=0.1)
   # feature_selection(train,test)
   ######################################################
@@ -109,14 +110,14 @@ for GROUP in range(0,10):
     'acc_test_after',
     'auc_test_after'
   ]
-  result = pd.DataFrame(pd.Series({
+  result = pd.DataFrame({
     'seed':GROUP,
     'acc_train_after':acc_train_after,
     'auc_train_after':auc_train_after,
     'acc_test_after':acc_test_after,
     'auc_test_after':auc_test_after
-  }))
-  fname = "RESULT_PCA_0-1_class_0-001.csv"
+  },columns=columns,index=[0])
+  fname = "RESULT_cold_other_PCA_0-1_class_0-01.csv"
   if(not os.path.isfile(fname)):
     result.to_csv(fname)
     print("create ",fname)
