@@ -1,8 +1,8 @@
 from extractImage import *
 from sklearn.preprocessing import LabelEncoder
 
-input_file = "coldstorage_path.csv"
-store = "coldstorage"
+input_file = "redmart_path.csv"
+store = "redmart"
 img_root = store+"_img"
 df = pd.read_csv(input_file, header = 0)
 ### Preprocessing  start ###

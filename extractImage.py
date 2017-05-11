@@ -47,20 +47,18 @@ def extractImage_contextual(PATH):
   return vectorImg
 
 def extractImage_sift(PATH):
-  img = cv2.imread(PATH)
-  gray= cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-  
+  img = cv2.imread(PATH,1)
+  # gray= cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
   sift = cv2.xfeatures2d.SIFT_create()
-  kp, des = sift.detectAndCompute(gray,None)
+  kp, des = sift.detectAndCompute(img,None)
   
   return des
 
-def extractImage_surf(PATH,threshold=400):
-  img = cv2.imread(PATH)
-  gray= cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-  
+def extractImage_surf(PATH):
+  img = cv2.imread(PATH,1)
+  # gray= cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
   surf = cv2.xfeatures2d.SURF_create(threshold)
-  kp, des = surf.detectAndCompute(gray,None)
+  kp, des = surf.detectAndCompute(img,None)
   return des
 
 def extractImage_orb(PATH):
