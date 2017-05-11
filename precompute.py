@@ -5,7 +5,7 @@ from sklearn.model_selection import cross_val_score
 from collections import Counter
 import operator
 
-def reduce_class(x,y,threshold = 0.01,other=False):
+def reduce_class(x,y,threshold = 0.01):
   print("Reduce Class")
   y_size = len(y)
   freq_y = Counter(y)

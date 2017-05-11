@@ -14,7 +14,7 @@ STORE = ["coldstorage","fairprice","giant","redmart"]
 FUNCTION = ["contextual","sift","surf","orb"]
 num_k = ["contextual","sqrt(n)","sqrt(half(n))"]
 CLASSIFIER = ['Naivebayes','LogisticRegression','NeuralNetwork','SVM-Linear','SVM-RBF','SVM-Poly']
-PATH = "D://image_feature/"
+PATH = "image_feature/"
 
 # Specify input csv file
 print("STORE")
@@ -80,7 +80,7 @@ for GROUP in range(0,10):
   ############### pre-processed data ###################
 
   train,label_train = reduce_class(train,label_train,threshold=0.001)
-  train,test = feature_selection(train,test,threshold=0.1)
+  train,test = feature_selection(train,test,threshold=1)
   # feature_selection(train,test)
   ######################################################
   print("Pre-processed Data")
@@ -116,7 +116,7 @@ for GROUP in range(0,10):
     'acc_test_after':acc_test_after,
     'auc_test_after':auc_test_after
   }))
-  fname = "RESULT_PCA_0-1_class_0-001.csv"
+  fname = "RESULT_"+STORE+"_PCA_0-1_class_0-01.csv"
   if(not os.path.isfile(fname)):
     result.to_csv(fname)
     print("create ",fname)
