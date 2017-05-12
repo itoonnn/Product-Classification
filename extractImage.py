@@ -54,7 +54,7 @@ def extractImage_sift(PATH):
   
   return des
 
-def extractImage_surf(PATH):
+def extractImage_surf(PATH,threshold=400):
   img = cv2.imread(PATH,1)
   # gray= cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
   surf = cv2.xfeatures2d.SURF_create(threshold)
