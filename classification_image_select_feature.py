@@ -68,7 +68,11 @@ print("Pre-processed Data")
 print(np.shape(train))
 print(np.shape(test))
 classifier = CLASSIFIER
-clf = classification(classifier,1,SEED=SEED)
+store = STORE
+feature = FUNCTION
+numk = num_k
+param = 1
+clf = classification(classifier,param,SEED=SEED)
 clf.fit(train, label_train)
 train_acc,train_precision,train_recall,train_f1,train_auc,predict_train_time = predict_process(train,label_train,clf)
 test_acc,test_precision,test_recall,test_f1,test_auc,predict_test_time = predict_process(test,label_test,clf)
@@ -96,7 +100,7 @@ result = pd.DataFrame({
   'classifier': classifier,
   'feature': feature,
   'numk': numk,
-  'param':str(param_max),
+  'param':param,
   'train_acc':train_acc,
   'train_precision':train_precision,
   'train_recall':train_recall,
