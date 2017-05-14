@@ -1,4 +1,5 @@
 from extractImage import *
+from precompute import *
 from sklearn.preprocessing import LabelEncoder
 
 input_file = "redmart_path.csv"
@@ -25,7 +26,8 @@ print("Uniqued df by name : "+str(len(df['name'])))
 number = LabelEncoder()
 y = df['category_path']
 y = y.astype(str) 
-y = number.fit_transform(y)
-print(np.shape(df['img_file']))
-for i in range(0,10):
-  x = extractImageFeature(df['img_file'],img_root,label=y,opt="sift",split=True,random_state=2000,save=True,GROUP=i)
+y = build_heirarchy_label(y)
+# y = number.fit_transform(y)
+# print(np.shape(df['img_file']))
+# for i in range(0,10):
+#   x = extractImageFeature(df['img_file'],img_root,label=y,opt="sift",split=True,random_state=2000,save=True,GROUP=i)

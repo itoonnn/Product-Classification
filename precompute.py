@@ -1,11 +1,138 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.model_selection import cross_val_score
+from sklearn.preprocessing import LabelEncoder
 from collections import Counter
-import operator
+from anytree import Node, RenderTree, AsciiStyle
+from sklearn.preprocessing import Normalizer
+import operator,sys
 
-def reduce_class(x,y,y_test=[],threshold = 0.01,other=False):
+def uprint(*objects, sep=' ', end='\n', file=sys.stdout):
+    enc = file.encoding
+    if enc == 'UTF-8':
+        print(*objects, sep=sep, end=end, file=file)
+    else:
+        f = lambda obj: str(obj).encode(enc, errors='backslashreplace').decode(enc)
+        print(*map(f, objects), sep=sep, end=end, file=file)
+
+def build_heirarchy_label(label):
+  seq_label = label.str.split("->")
+  # [list(x) for x in set(tuple(x) for x in testdata)]
+  top_level = set(map(lambda x: tuple(x)[0], seq_label))
+  second_level = set(map(lambda x: tuple(x)[0:2], seq_label))
+  third_level = set(map(lambda x: tuple(x)[0:3], seq_label))
+
+  root = Node('root')
+  cat_top = []
+  cat_sec = {}
+  cat_third = {}
+
+  for top_node in top_level:
+    cat_top.append(Node(top_node,parent=root))
+    cat_sec[top_node] = []
+    cat_third[top_node] = {}
+    for second_node in second_level:
+      if( len(second_node)>=2 and second_node[0]==top_node ):
+        cat_sec[top_node].append(Node(second_node[1],parent=cat_top[-1]))
+        cat_third[top_node][second_node[1]] = []
+        for third_node in third_level:
+          if( len(third_node)>=3 and third_node[0]==second_node[0] and third_node[1]==second_node[1] ):
+            cat_third[top_node][second_node[1]].append(Node(third_node[2],parent=cat_sec[top_node][-1]))
+
+  uprint(RenderTree(root,style=AsciiStyle()))
+
+  rootNum = Node('root')
+  catNum_top = []
+  catNum_sec = {}
+  catNum_third = {}
+
+  top_labeler = LabelEncoder()
+  top_labels = list([child.name for child in root.children])
+  top_numlabels = top_labeler.fit_transform(top_labels)
+  top_norm = Normalizer()
+  top_numlabels = top_norm.fit_transform(top_numlabels)[0]
+  for i,top_node in enumerate(top_level):
+    catNum_top.append(Node(top_numlabels[i],parent=rootNum))
+    catNum_sec[top_numlabels[i]] = []
+    catNum_third[top_numlabels[i]] = {}
+
+    sec_labeler = LabelEncoder()
+    sec_labels = list([child.name for child in cat_top[i].children])
+    sec_numlabels = sec_labeler.fit_transform(sec_labels)
+    sec_norm = Normalizer()
+    if(len(sec_numlabels)!=0):
+      sec_numlabels=sec_norm.fit_transform(sec_numlabels)[0]
+
+    # uprint(RenderTree(sec_numlabels,style=AsciiStyle()))
+    j_num = 0
+    for j,sec_node in enumerate(second_level):
+      if( len(sec_node)>=2 and sec_node[0]==top_node ):
+        catNum_sec[top_numlabels[i]].append(Node(sec_numlabels[j_num],parent=catNum_top[-1]))
+        catNum_third[top_numlabels[i]][sec_numlabels[j_num]] = []
+        j_num += 1
+
+
+        third_labeler = LabelEncoder()
+        print(cat_top)
+        # third_labels = list([child.name for child in cat_top[i].children])
+        # third_numlabels = third_labeler.fit_transform(third_labels)
+        # third_norm = Normalizer()
+        # if(len(sec_numlabels)!=0):
+        #   sec_numlabels = sec_norm.fit_transform(sec_numlabels)[0]
+        # else:
+        #   sec_numlabels = []
+  # print(top_level)
+  # print(second_level)
+  uprint(RenderTree(rootNum,style=AsciiStyle()))
+
+
+  
+  # for pre, fill, node in RenderTree(root):
+  #   uprint(u"%s%s" % (pre, node.name))
+
+
+  # cat_tree = dict()
+  # for top in top_level:
+  #   cat_tree[top] = dict()
+  #   for second in second_level:
+  #     if(len(second)>=2 and second[0]==top):
+  #       cat_tree[top][second[1]] = list() 
+  #       for third in third_level:
+  #         if(len(third)>=3 and third[0]==top and third[1]==second[1]):
+  #           cat_tree[top][second[1]].append(third[2])
+
+  # top_labeler = LabelEncoder()
+  # top_labels = list(cat_tree.keys())
+  # top_numlabels = top_labeler.fit_transform(top_labels)
+  # cat_tree.keys() = dictkeys(top_numlabels)
+
+  # second_labels = {}
+  # second_labeler = {}
+  # second_numlabels = {}
+  # for top_node in top_labels:
+  #   second_labeler[top_node] = LabelEncoder()
+  #   second_labels = list(cat_tree[top_node].keys())
+  #   second_numlabels[top_node] = second_labeler[top_node].fit_transform(second_labels)
+
+  #   third_labels = {}
+  #   third_labeler = {}
+  #   third_numlabels = {}
+  #   for second_node in second_labels:
+  #     third_labeler[second_node] = LabelEncoder()
+  #     third_labels = list(cat_tree[top_node][second_node])
+  #     third_numlabels[second_node] = third_labeler[second_node].fit_transform(second_labels)
+
+  # print(top_numlabels)
+  # print(second_numlabels)
+  # print(third_numlabels)
+
+
+  return 0
+
+def reduce_class(x,y,threshold = 0.01,other=False):
   print("Reduce Class")
   y_size = len(y)
   freq_y = Counter(y)

@@ -61,7 +61,7 @@ print("Shape of Data")
 print(np.shape(train))
 print(np.shape(test))
 ############### pre-processed data ###################
-train,label_train,label_test = reduce_class(train,label_train,threshold=0.01,other=True,y_test=label_test)
+train,label_train,label_test = reduce_class(train,label_train,threshold=0.001,other=True,y_test=label_test)
 
 ######################################################
 print("Pre-processed Data")
