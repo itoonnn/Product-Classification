@@ -19,7 +19,15 @@ def uprint(*objects, sep=' ', end='\n', file=sys.stdout):
         print(*map(f, objects), sep=sep, end=end, file=file)
 
 def build_heirarchy_label(label):
-  cat_map = {}
+  cat_map = pd.DataFrame(columns=[
+    'level',
+    'top_name',
+    'second_name',
+    'third_name',
+    'top_value',
+    'second_value',
+    'third_value'
+  ])
   seq_label = label.str.split("->")
   # [list(x) for x in set(tuple(x) for x in testdata)]
   top_level = set(map(lambda x: tuple(x)[0], seq_label))
@@ -54,11 +62,13 @@ def build_heirarchy_label(label):
   top_numlabels = top_labeler.fit_transform(top_labels)
   top_norm = Normalizer()
   top_numlabels = top_norm.fit_transform(top_numlabels)[0]
+  idx = 0
   for i,top_node in enumerate(top_level):
     catNum_top.append(Node(top_numlabels[i],parent=rootNum))
     catNum_sec[top_numlabels[i]] = []
     catNum_third[top_numlabels[i]] = {}
-
+    cat_map.loc[idx] = [0,top_node,None,None,top_numlabels[i],None,None]
+    idx+=1
     sec_labeler = LabelEncoder()
     sec_labels = list([child.name for child in cat_top[i].children])
     if(len(sec_labels)!=0):      
@@ -71,7 +81,8 @@ def build_heirarchy_label(label):
         if( len(sec_node)>=2 and sec_node[0]==top_node ):
           catNum_sec[top_numlabels[i]].append(Node(sec_numlabels[j_num],parent=catNum_top[-1]))
           catNum_third[top_numlabels[i]][sec_numlabels[j_num]] = []
-          
+          cat_map.loc[idx] = [1,top_node,sec_node[1],None,top_numlabels[i],sec_numlabels[j_num],None]
+          idx+=1
           third_labeler = LabelEncoder()
           third_labels = list([ child.name for child in cat_sec[sec_node[0]][j_num].children])
           if(len(third_labels)!=0):
@@ -83,53 +94,13 @@ def build_heirarchy_label(label):
             for k, third_node in enumerate(third_level):
               if(len(third_node)>=3 and third_node[0]==sec_node[0] and third_node[1]==sec_node[1]):
                 catNum_third[top_numlabels[i]][sec_numlabels[j_num]].append(Node(third_numlabels[k_num],parent=catNum_sec[top_numlabels[i]][j_num]))
+                cat_map.loc[idx] = [2,top_node,sec_node[1],third_node[2],top_numlabels[i],sec_numlabels[j_num],third_node[2]]
+                idx+=1
                 k_num += 1
           j_num += 1
-
-  uprint(RenderTree(rootNum,style=AsciiStyle()))
-  uprint(RenderTree(root,style=AsciiStyle()))
-
-
-  
-  # for pre, fill, node in RenderTree(root):
-  #   uprint(u"%s%s" % (pre, node.name))
-
-
-  # cat_tree = dict()
-  # for top in top_level:
-  #   cat_tree[top] = dict()
-  #   for second in second_level:
-  #     if(len(second)>=2 and second[0]==top):
-  #       cat_tree[top][second[1]] = list() 
-  #       for third in third_level:
-  #         if(len(third)>=3 and third[0]==top and third[1]==second[1]):
-  #           cat_tree[top][second[1]].append(third[2])
-
-  # top_labeler = LabelEncoder()
-  # top_labels = list(cat_tree.keys())
-  # top_numlabels = top_labeler.fit_transform(top_labels)
-  # cat_tree.keys() = dictkeys(top_numlabels)
-
-  # second_labels = {}
-  # second_labeler = {}
-  # second_numlabels = {}
-  # for top_node in top_labels:
-  #   second_labeler[top_node] = LabelEncoder()
-  #   second_labels = list(cat_tree[top_node].keys())
-  #   second_numlabels[top_node] = second_labeler[top_node].fit_transform(second_labels)
-
-  #   third_labels = {}
-  #   third_labeler = {}
-  #   third_numlabels = {}
-  #   for second_node in second_labels:
-  #     third_labeler[second_node] = LabelEncoder()
-  #     third_labels = list(cat_tree[top_node][second_node])
-  #     third_numlabels[second_node] = third_labeler[second_node].fit_transform(second_labels)
-
-  # print(top_numlabels)
-  # print(second_numlabels)
-  # print(third_numlabels)
-
+  print(cat_map)
+  # uprint(RenderTree(rootNum,style=AsciiStyle()))
+  # uprint(RenderTree(root,style=AsciiStyle()))
 
   return 0
 
