@@ -2,8 +2,8 @@ from extractImage import *
 from precompute import *
 from sklearn.preprocessing import LabelEncoder
 
-input_file = "redmart_path.csv"
-store = "redmart"
+input_file = "fairprice_path.csv"
+store = "fairprice"
 img_root = store+"_img"
 df = pd.read_csv(input_file, header = 0)
 ### Preprocessing  start ###
@@ -26,7 +26,13 @@ print("Uniqued df by name : "+str(len(df['name'])))
 number = LabelEncoder()
 y = df['category_path']
 y = y.astype(str) 
-y = build_heirarchy_label(y)
+cat_map = build_heirarchy_label(y) # use for label mapping
+cat_map.to_csv(store+"_map.csv") 
+y = y.str.split("->")
+y = map_label(y,cat_map)
+
+
+
 # y = number.fit_transform(y)
 # print(np.shape(df['img_file']))
 # for i in range(0,10):

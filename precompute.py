@@ -94,15 +94,33 @@ def build_heirarchy_label(label):
             for k, third_node in enumerate(third_level):
               if(len(third_node)>=3 and third_node[0]==sec_node[0] and third_node[1]==sec_node[1]):
                 catNum_third[top_numlabels[i]][sec_numlabels[j_num]].append(Node(third_numlabels[k_num],parent=catNum_sec[top_numlabels[i]][j_num]))
-                cat_map.loc[idx] = [2,top_node,sec_node[1],third_node[2],top_numlabels[i],sec_numlabels[j_num],third_node[2]]
+                cat_map.loc[idx] = [2,top_node,sec_node[1],third_node[2],top_numlabels[i],sec_numlabels[j_num],third_numlabels[k_num]]
                 idx+=1
                 k_num += 1
           j_num += 1
-  print(cat_map)
   # uprint(RenderTree(rootNum,style=AsciiStyle()))
   # uprint(RenderTree(root,style=AsciiStyle()))
+  return cat_map
+def map_label(y,cmap):
+  y_top = []
+  y_sec = []
+  y_third = []
+  for i in range(len(y)):
+    y_top_node = cmap[(cmap['level']==0)&(cmap['top_name']== y[i][0])]['top_value'].values[0] if len(y[i])>0 else None
+    y_sec_node = cmap[(cmap['level']==1)&(cmap['top_name']== y[i][0])&(cmap['second_name']== y[i][1])][['top_value','second_value']].values[0] if len(y[i])>1 else None
+    y_third_node = cmap[(cmap['level']==2)&(cmap['top_name']== y[i][0])&(cmap['second_name']== y[i][1])&(cmap['third_name']== y[i][2])][['top_value','second_value','third_value']].values[0] if len(y[i])>2 else None
+    y_top.append(y_top_node)
+    y_sec.append(y_sec_node)
+    y_third.append(y_third_node)
 
+  y_top = np.array(y_top)
+  y_sec = np.array(y_sec)
+  y_third = np.array(y_third)
+  # print(y_top[y_top[:,0]==0.350070021])
+  print(y_sec[y_sec[:,0]==y_top[0]][:,1])
+  print(y_third[y_third[:,0]==y_top[0]][:,2])
   return 0
+
 
 def reduce_class(x,y,threshold = 0.01,other=False):
   print("Reduce Class")
