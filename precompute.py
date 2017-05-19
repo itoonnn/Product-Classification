@@ -102,24 +102,60 @@ def build_heirarchy_label(label):
   # uprint(RenderTree(root,style=AsciiStyle()))
   return cat_map
 def map_label(y,cmap):
+  print("mapping label")
   y_top = []
   y_sec = []
   y_third = []
+  columns=[
+    'level',
+    'top_name',
+    'second_name',
+    'third_name',
+    'top_value',
+    'second_value',
+    'third_value'
+  ]
+  y_map = pd.DataFrame(columns = columns)
   for i in range(len(y)):
-    y_top_node = cmap[(cmap['level']==0)&(cmap['top_name']== y[i][0])]['top_value'].values[0] if len(y[i])>0 else None
-    y_sec_node = cmap[(cmap['level']==1)&(cmap['top_name']== y[i][0])&(cmap['second_name']== y[i][1])][['top_value','second_value']].values[0] if len(y[i])>1 else None
-    y_third_node = cmap[(cmap['level']==2)&(cmap['top_name']== y[i][0])&(cmap['second_name']== y[i][1])&(cmap['third_name']== y[i][2])][['top_value','second_value','third_value']].values[0] if len(y[i])>2 else None
-    y_top.append(y_top_node)
-    y_sec.append(y_sec_node)
-    y_third.append(y_third_node)
+    top_name,second_name,third_name = None,None,None
+    top_node,sec_node,third_node = None,None,None
+    if(len(y[i])>0):
+      top_node = cmap[(cmap['level']==0)&(cmap['top_name']== y[i][0])]['top_value'].values[0] if len(y[i])>0 else None
+      level = 0
+      top_name = y[i][0]
+    if(len(y[i])>1):
+      sec_node = cmap[(cmap['level']==1)&(cmap['top_name']== y[i][0])&(cmap['second_name']== y[i][1])][['top_value','second_value']].values[0][1] if len(y[i])>1 else None    
+      level = 1
+      second_name = y[i][1]
+    if(len(y[i])>2):
+      third_node =  cmap[(cmap['level']==2)&(cmap['top_name']== y[i][0])&(cmap['second_name']== y[i][1])&(cmap['third_name']== y[i][2])][['top_value','second_value','third_value']].values[0][2] if len(y[i])>2 else None
+      level = 2
+      third_name = y[i][2]
+    # y_third_node = cmap[(cmap['level']==2)&(cmap['top_name']== y[i][0])&(cmap['second_name']== y[i][1])&(cmap['third_name']== y[i][2])][['top_value','second_value','third_value']].values[0] if len(y[i])>2 else None
+    # y_sec_node = cmap[(cmap['level']==1)&(cmap['top_name']== y[i][0])&(cmap['second_name']== y[i][1])][['top_value','second_value']].values[0] if len(y[i])>1 else None
+    # y_top_node = cmap[(cmap['level']==0)&(cmap['top_name']== y[i][0])]['top_value'].values[0] if len(y[i])>0 else None
+    # y_top.append(y_top_node)
+    # y_sec.append(y_sec_node)
+    # y_third.append(y_third_node)
+    
 
-  y_top = np.array(y_top)
-  y_sec = np.array(y_sec)
-  y_third = np.array(y_third)
-  # print(y_top[y_top[:,0]==0.350070021])
-  print(y_sec[y_sec[:,0]==y_top[0]][:,1])
-  print(y_third[y_third[:,0]==y_top[0]][:,2])
-  return 0
+    node = {
+    'level':level,
+    'top_name':top_name,
+    'second_name':second_name,
+    'third_name':third_name,
+    'top_value':top_node,
+    'second_value':sec_node,
+    'third_value':third_node
+    }
+    y_map = y_map.append(node, ignore_index=True)
+
+  # y_top = np.array(y_top)
+  # y_sec = np.array(y_sec)
+  # y_third = np.array(y_third)
+  # print(y_sec[y_sec[:,0]==y_top[0]][:,1]) ## numpy selecting
+  # print(y_third[y_third[:,0]==y_top[0]][:,2])
+  return y_map
 
 
 def reduce_class(x,y,threshold = 0.01,other=False):
@@ -179,6 +215,70 @@ def feature_selection(train,test,threshold = 0.9):
   train = pca.fit_transform(train)
   test = pca.transform(test)
   return train,test
+
+def reduce_hierachical_class(y,threshold = 0.01,other=False):
+  print("Reduce Class")
+  y = y.reset_index()
+  y = y.fillna(99)
+  y_size = len(y)
+  print(y.groupby(['top_value','second_value','third_value']).size())
+  # freq_y = Counter(y)
+  # freq_y = sorted(freq_y.items(), key=operator.itemgetter(1),reverse=True)
+  return 0
+  # SUM = 0
+  # count = 0
+  # removed_class = []
+  # ## fy[0] = class, fy[1] = freq
+  # for fy in freq_y:
+  #   freq = fy[1]/y_size
+  #   if(freq < threshold):
+  #     count += 1
+  #     SUM += fy[1]
+  #     removed_class.append(fy[0])
+  #     # print(fy,freq)
+
+  # print("exist class : ",len(freq_y)-count)
+  # print("remove amount : ",SUM)
+  # print("remove rate : ",SUM/y_size)
+  # print("removed class\n",removed_class)
+  # for i in range(y_size):
+  #   if y[i] in removed_class:
+  #     if(other):     ############ other
+  #       y[i] = 9999.0
+  #     else:
+  #       y[i] = None
+  #       x[i] = None
+  # if(other):         ############ other
+  #   for i in range(len(y_test)):
+  #     if y_test[i] in removed_class:
+  #       y_test[i] = 9999.0
+  # x = x[~np.isnan(x).all(1)]
+  # y = y[~np.isnan(y)]
+  # if(other):
+  #   return x,y,y_test
+  # else:
+  #   return x,y
+
+def feature_selection(train,test,threshold = 0.9):
+  print("PCA")
+  pca = PCA(svd_solver='full',random_state=2000)
+  pca = pca.fit(train)
+  explained_variance = pca.explained_variance_ratio_
+  SUM = 0
+  n_components = 0
+  for var in explained_variance:
+    if(SUM <= threshold):
+      SUM += var
+      n_components += 1
+    else:  
+      break
+  print(SUM,n_components)
+  pca = PCA(n_components = n_components, svd_solver='full', random_state=2000)
+  train = pca.fit_transform(train)
+  test = pca.transform(test)
+  return train,test
+
+
 # def feature_selection(train,test):
 #   score_before = 0
 #   rc_before = 0

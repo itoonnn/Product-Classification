@@ -26,10 +26,12 @@ print("Uniqued df by name : "+str(len(df['name'])))
 number = LabelEncoder()
 y = df['category_path']
 y = y.astype(str) 
-cat_map = build_heirarchy_label(y) # use for label mapping
-cat_map.to_csv(store+"_map.csv") 
+# cat_map = build_heirarchy_label(y) # use for label mapping
+# cat_map.to_csv(store+"_map.csv") 
+cat_map = pd.read_csv(store+"_map.csv", header = 0)
 y = y.str.split("->")
 y = map_label(y,cat_map)
+y = reduce_hierachical_class(y)
 
 
 
