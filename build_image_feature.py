@@ -66,6 +66,10 @@ print(remove_index)
 ### reduce x follow y
 x = x.reset_index()
 x = x.drop(x.index[remove_index])
+### reset index all
 x = x['img_file']
+x = x.reset_index(drop=True)
+y = y.reset_index(drop=True)
+# print(y.loc[[1,2,3,4]])
 for i in range(0,10):
   train,test,label_train,label_test = extractImageFeature(x,img_root,label=y,opt="sift",split=True,random_state=2000,save=True,GROUP=i)

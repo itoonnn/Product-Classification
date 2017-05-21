@@ -160,8 +160,8 @@ def extractImageFeature(data,img_root,label=[],opt='contextual',random_state = 2
       INDEX.append({'train':train_index,'test':test_index})
     train = x[INDEX[GROUP]['train']]
     test = x[INDEX[GROUP]['test']]
-    label_train = label[INDEX[GROUP]['train']]
-    label_test = label[INDEX[GROUP]['test']]
+    label_train = label.loc[INDEX[GROUP]['train']]
+    label_test = label.loc[INDEX[GROUP]['test']]
     print(np.shape(test))
     if(opt in ['sift','surf','orb']):
       for i in range(len(train)):
@@ -193,10 +193,10 @@ def extractImageFeature(data,img_root,label=[],opt='contextual',random_state = 2
       train = build_histrogram(train,centroids,train_cluster_labels,n_clusters)
       test = build_histrogram(test,centroids,test_cluster_labels,n_clusters)
       if(save):
-        np.savetxt("../image_feature/sqrt(half(n))/feature_"+store+"_"+opt+"_train_"+str(GROUP)+".csv",train,delimiter=',')
-        np.savetxt("../image_feature/sqrt(half(n))/feature_"+store+"_"+opt+"_test_"+str(GROUP)+".csv",test,delimiter=',')
-        np.savetxt("../image_feature/sqrt(half(n))/label_"+store+"_"+opt+"_train_"+str(GROUP)+".csv",label_train)
-        np.savetxt("../image_feature/sqrt(half(n))/label_"+store+"_"+opt+"_test_"+str(GROUP)+".csv",label_test)
+        np.savetxt("../img_feature/sqrt(half(n))/feature_"+store+"_"+opt+"_train_"+str(GROUP)+".csv",train,delimiter=',')
+        np.savetxt("../img_feature/sqrt(half(n))/feature_"+store+"_"+opt+"_test_"+str(GROUP)+".csv",test,delimiter=',')
+        label_train.to_csv("../img_feature/sqrt(half(n))/label_"+store+"_"+opt+"_train_"+str(GROUP)+".csv",sep=",")
+        label_test.to_csv("../img_feature/sqrt(half(n))/label_"+store+"_"+opt+"_test_"+str(GROUP)+".csv",sep=",")
       
     return train,test,label_train,label_test
 
