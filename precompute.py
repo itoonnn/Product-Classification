@@ -119,6 +119,7 @@ def map_label(y,cmap):
   for i in range(len(y)):
     top_name,second_name,third_name = None,None,None
     top_node,sec_node,third_node = None,None,None
+
     if(len(y[i])>0):
       top_node = cmap[(cmap['level']==0)&(cmap['top_name']== y[i][0])]['top_value'].values[0] if len(y[i])>0 else None
       level = 0
@@ -156,6 +157,8 @@ def map_label(y,cmap):
   # print(y_sec[y_sec[:,0]==y_top[0]][:,1]) ## numpy selecting
   # print(y_third[y_third[:,0]==y_top[0]][:,2])
   return y_map
+
+
 
 
 def reduce_class(x,y,threshold = 0.01,other=False):
@@ -216,48 +219,63 @@ def feature_selection(train,test,threshold = 0.9):
   test = pca.transform(test)
   return train,test
 
+
+def reduceHCProcess(y,level,threshold = 0.01):
+  y_size = len(y)
+  reduce_index = []
+
+  print("### LEVEL ",level," ###")
+  if(level==2):
+    y_level = y[(y['third_name']!=99)&(y['third_value']!=99)]
+    groupby = ['top_name','second_name','third_name']
+  elif(level==1):
+    y_level = y[(y['second_name']!=99)&(y['second_value']!=99)]
+    groupby = ['top_name','second_name']
+  else:
+    y_level = y
+    groupby = ['top_name']
+
+
+  freq_y = pd.DataFrame(y_level.groupby(groupby).size(),columns=['size'])
+  print(np.shape(freq_y))
+  freq_y['size'] = freq_y['size']/y_size
+  freq_y = freq_y.sort('size',ascending=False)
+
+  print("Small Classes")
+  reduce_freq_y = freq_y[freq_y['size']<threshold]
+  SUM = reduce_freq_y['size'].sum()
+  print(reduce_freq_y)
+  print("sumerized freq :",SUM)
+  print("shape :",np.shape(reduce_freq_y))
+  if(SUM > 0): ### Terminate Condition
+  #   break
+    reduce_class = reduce_freq_y.reset_index(level=groupby)
+    reduce_data = pd.merge(y, reduce_class, how='inner', on=groupby)
+    reduce_index = list(reduce_data['index'])
+    if level > 0:
+      for i in reduce_index:
+        if level==2 and y.loc[i]['third_value'] != 99:
+          y.loc[i,'third_value'] = 99
+          y.loc[i,'third_name'] = 99
+          y.loc[i,'level'] = 1
+        elif level==1 and y.loc[i]['second_value'] != 99:
+          y.loc[i,'second_value'] = 99
+          y.loc[i,'second_name'] = 99
+          y.loc[i,'level'] = 0
+    else:
+      y = y.drop(y.index[reduce_index])
+      print("Number of Removed rows:",len(reduce_index))
+  return y,reduce_index
+
 def reduce_hierachical_class(y,threshold = 0.01,other=False):
   print("Reduce Class")
-  y = y.reset_index()
+  # y = y.reset_index()
   y = y.fillna(99)
-  y_size = len(y)
-  print(y.groupby(['top_value','second_value','third_value']).size())
-  # freq_y = Counter(y)
-  # freq_y = sorted(freq_y.items(), key=operator.itemgetter(1),reverse=True)
-  return 0
-  # SUM = 0
-  # count = 0
-  # removed_class = []
-  # ## fy[0] = class, fy[1] = freq
-  # for fy in freq_y:
-  #   freq = fy[1]/y_size
-  #   if(freq < threshold):
-  #     count += 1
-  #     SUM += fy[1]
-  #     removed_class.append(fy[0])
-  #     # print(fy,freq)
+  for level in range(2,-1,-1):
+    y,remove_index = reduceHCProcess(y,level,threshold = threshold)
+  # print(y)
+  return y,remove_index
 
-  # print("exist class : ",len(freq_y)-count)
-  # print("remove amount : ",SUM)
-  # print("remove rate : ",SUM/y_size)
-  # print("removed class\n",removed_class)
-  # for i in range(y_size):
-  #   if y[i] in removed_class:
-  #     if(other):     ############ other
-  #       y[i] = 9999.0
-  #     else:
-  #       y[i] = None
-  #       x[i] = None
-  # if(other):         ############ other
-  #   for i in range(len(y_test)):
-  #     if y_test[i] in removed_class:
-  #       y_test[i] = 9999.0
-  # x = x[~np.isnan(x).all(1)]
-  # y = y[~np.isnan(y)]
-  # if(other):
-  #   return x,y,y_test
-  # else:
-  #   return x,y
 
 def feature_selection(train,test,threshold = 0.9):
   print("PCA")

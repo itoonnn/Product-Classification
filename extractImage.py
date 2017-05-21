@@ -146,7 +146,7 @@ def extractImageFeature(data,img_root,label=[],opt='contextual',random_state = 2
     return x
   else:
     x = np.array(x)
-    y = label
+    y = label['top_name', 'second_name', 'third_name'].str.cat(['top_name', 'second_name', 'third_name'], sep='->')
     #### split train test
     SSK = StratifiedKFold(n_splits=10,random_state=random_state)
     INDEX = []
