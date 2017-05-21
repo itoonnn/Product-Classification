@@ -146,7 +146,13 @@ def extractImageFeature(data,img_root,label=[],opt='contextual',random_state = 2
     return x
   else:
     x = np.array(x)
-    y = label['top_name', 'second_name', 'third_name'].str.cat(['top_name', 'second_name', 'third_name'], sep='->')
+    y = label[['top_name', 'second_name', 'third_name']].replace(99, 'NA')
+    y = y[['top_name', 'second_name', 'third_name']]
+    y['label'] = y['top_name'].astype(str).str.cat(y['second_name'].astype(str),sep="->")
+    y['label'] = y['label'].astype(str).str.cat(y['third_name'].astype(str),sep="->")
+    y = y['label']
+    print(np.shape(y))
+    print(np.shape(x))
     #### split train test
     SSK = StratifiedKFold(n_splits=10,random_state=random_state)
     INDEX = []
@@ -154,8 +160,8 @@ def extractImageFeature(data,img_root,label=[],opt='contextual',random_state = 2
       INDEX.append({'train':train_index,'test':test_index})
     train = x[INDEX[GROUP]['train']]
     test = x[INDEX[GROUP]['test']]
-    label_train = y[INDEX[GROUP]['train']]
-    label_test = y[INDEX[GROUP]['test']]
+    label_train = label[INDEX[GROUP]['train']]
+    label_test = label[INDEX[GROUP]['test']]
     print(np.shape(test))
     if(opt in ['sift','surf','orb']):
       for i in range(len(train)):
@@ -187,10 +193,10 @@ def extractImageFeature(data,img_root,label=[],opt='contextual',random_state = 2
       train = build_histrogram(train,centroids,train_cluster_labels,n_clusters)
       test = build_histrogram(test,centroids,test_cluster_labels,n_clusters)
       if(save):
-        np.savetxt("image_feature/sqrt(half(n))/feature_"+store+"_"+opt+"_train_"+str(GROUP)+".csv",train,delimiter=',')
-        np.savetxt("image_feature/sqrt(half(n))/feature_"+store+"_"+opt+"_test_"+str(GROUP)+".csv",test,delimiter=',')
-        np.savetxt("image_feature/sqrt(half(n))/label_"+store+"_"+opt+"_train_"+str(GROUP)+".csv",label_train)
-        np.savetxt("image_feature/sqrt(half(n))/label_"+store+"_"+opt+"_test_"+str(GROUP)+".csv",label_test)
+        np.savetxt("../image_feature/sqrt(half(n))/feature_"+store+"_"+opt+"_train_"+str(GROUP)+".csv",train,delimiter=',')
+        np.savetxt("../image_feature/sqrt(half(n))/feature_"+store+"_"+opt+"_test_"+str(GROUP)+".csv",test,delimiter=',')
+        np.savetxt("../image_feature/sqrt(half(n))/label_"+store+"_"+opt+"_train_"+str(GROUP)+".csv",label_train)
+        np.savetxt("../image_feature/sqrt(half(n))/label_"+store+"_"+opt+"_test_"+str(GROUP)+".csv",label_test)
       
     return train,test,label_train,label_test
 
