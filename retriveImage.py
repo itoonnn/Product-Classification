@@ -3,7 +3,7 @@ import pandas as pd
 import os,sys
 import urllib.request as ur
 
-FILE = "redmart_path.csv"
+FILE = "redmart.csv"
 FOLDER_NAME = "redmart_img"
 
 try:
